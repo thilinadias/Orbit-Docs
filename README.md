@@ -90,6 +90,17 @@ To change the domain name after installation:
 
 We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
+## Testing
+
+To run the application tests, use the following command:
+
+```bash
+php artisan test
+```
+
+The testing environment is configured to use an in-memory SQLite database (`:memory:`), ensuring fast and isolated tests without requiring a separate MySQL database.
+All migrations are automatically run before each test using the `RefreshDatabase` trait.
+
 ## License
 
 This project is licensed under the Apache 2.0 License.
