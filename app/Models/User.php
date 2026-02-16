@@ -29,6 +29,7 @@ class User extends Authenticatable
         'google2fa_secret',
         'is_2fa_enforced',
         'two_factor_recovery_codes',
+        'is_super_admin',
     ];
 
     /**
