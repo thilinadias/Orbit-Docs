@@ -27,7 +27,7 @@ class CheckInstalled
             // App is installed.
             // If user tries to access /install routes, redirect to dashboard (unless we want to allow re-install? generally no).
             if ($request->is('install*')) {
-                return redirect()->route('dashboard');
+                return redirect()->route('login');
             }
             return $next($request);
         }
