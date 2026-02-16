@@ -26,7 +26,7 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
 
 1.  **Clone the Repository**
     ```bash
-    git clone https://github.com/thilinadias/OrbitDocs.git
+    [git clone https://github.com/thilinadias/OrbitDocs.git](https://github.com/thilinadias/orbit-docs.git)
     cd OrbitDocs
     ```
 
