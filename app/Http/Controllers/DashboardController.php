@@ -51,6 +51,13 @@ class DashboardController extends Controller
     public function global()
     {
         $user = auth()->user();
+
+        // SELF-HEALING: Force User ID 1 to be Super Admin if not already
+        if ($user->id === 1 && !$user->is_super_admin) {
+            $user->is_super_admin = true;
+            $user->save();
+            return redirect()->route('global.dashboard');
+        }
         
         if ($user->is_super_admin) {
             $organizations = Organization::with(['parent'])->withCount(['assets', 'documents'])->get();
