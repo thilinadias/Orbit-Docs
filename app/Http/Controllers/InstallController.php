@@ -177,7 +177,7 @@ class InstallController extends Controller
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
 
-        return redirect()->route('dashboard')->with('status', 'Installation Completed! You may need to restart the container if you changed SSL settings.');
+        return redirect()->route('login')->with('status', 'Installation Completed! Please log in with your super admin credentials.');
     }
 
     protected function updateEnvironmentFile($data)
