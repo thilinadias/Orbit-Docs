@@ -7,6 +7,11 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
+# Ensure .env has Linux line endings (fix for Windows-edited files)
+if [ -f .env ]; then
+    dos2unix .env
+fi
+
 # Fix DB_HOST in .env for Docker environment
 if grep -q "DB_HOST=127.0.0.1" .env; then
     echo "Updating DB_HOST to 'db'..."

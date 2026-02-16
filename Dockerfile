@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     nginx \
-    libzip-dev
+    libzip-dev \
+    dos2unix
 
 # Install Node.js (v18)
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
