@@ -9,10 +9,25 @@ fi
 
 # Fix DB_HOST in .env for Docker environment
 if grep -q "DB_HOST=127.0.0.1" .env; then
-    echo "Configuring .env for Docker..."
+    echo "Updating DB_HOST to 'db'..."
     sed -i 's/DB_HOST=127.0.0.1/DB_HOST=db/g' .env
+fi
+
+# Fix DB_DATABASE in .env
+if grep -q "DB_DATABASE=laravel" .env; then
+    echo "Updating DB_DATABASE to 'orbitdocs'..."
     sed -i 's/DB_DATABASE=laravel/DB_DATABASE=orbitdocs/g' .env
+fi
+
+# Fix DB_USERNAME in .env
+if grep -q "DB_USERNAME=root" .env; then
+    echo "Updating DB_USERNAME to 'orbitdocs'..."
     sed -i 's/DB_USERNAME=root/DB_USERNAME=orbitdocs/g' .env
+fi
+
+# Fix DB_PASSWORD in .env (only if empty)
+if grep -q "DB_PASSWORD=$" .env; then
+    echo "Updating DB_PASSWORD to 'secret'..."
     sed -i 's/DB_PASSWORD=/DB_PASSWORD=secret/g' .env
 fi
 
