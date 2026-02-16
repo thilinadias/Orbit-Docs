@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE activity_logs CHANGE COLUMN entity_type subject_type VARCHAR(255) NULL");
-        DB::statement("ALTER TABLE activity_logs CHANGE COLUMN entity_id subject_id BIGINT UNSIGNED NULL");
+        Schema::table('activity_logs', function (Blueprint $table) {
+            $table->renameColumn('entity_type', 'subject_type');
+        });
+
+        Schema::table('activity_logs', function (Blueprint $table) {
+            $table->renameColumn('entity_id', 'subject_id');
+        });
     }
 
     /**
@@ -22,6 +27,9 @@ return new class extends Migration
     {
         Schema::table('activity_logs', function (Blueprint $table) {
             $table->renameColumn('subject_type', 'entity_type');
+        });
+
+        Schema::table('activity_logs', function (Blueprint $table) {
             $table->renameColumn('subject_id', 'entity_id');
         });
     }

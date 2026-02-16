@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Use raw SQL for compatibility with older MariaDB versions
-        DB::statement('ALTER TABLE assets CHANGE warranty_expire_date warranty_expiration_date DATE');
+        Schema::table('assets', function (Blueprint $table) {
+            $table->renameColumn('warranty_expire_date', 'warranty_expiration_date');
+        });
     }
 
     /**
@@ -20,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('ALTER TABLE assets CHANGE warranty_expiration_date warranty_expire_date DATE');
+        Schema::table('assets', function (Blueprint $table) {
+            $table->renameColumn('warranty_expiration_date', 'warranty_expire_date');
+        });
     }
 };

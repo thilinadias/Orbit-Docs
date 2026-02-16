@@ -14,7 +14,7 @@
             {{ __('Two-Factor Authentication is currently ENABLED.') }}
         </div>
 
-        @if(Auth::user()->is_super_admin || Auth::user()->hasRole('admin'))
+        @if(!Auth::user()->is_2fa_enforced || Auth::user()->is_super_admin || Auth::user()->hasRole('admin'))
             <form method="POST" action="{{ route('2fa.disable') }}" class="mt-4">
                 @csrf
                 

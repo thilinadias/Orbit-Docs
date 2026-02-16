@@ -125,7 +125,9 @@ return new class extends Migration
         });
         
         // Fulltext index for MySQL 8
-        DB::statement('ALTER TABLE documents ADD FULLTEXT fulltext_index (title, content)');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('ALTER TABLE documents ADD FULLTEXT fulltext_index (title, content)');
+        }
 
         Schema::create('document_versions', function (Blueprint $table) {
             $table->id();
