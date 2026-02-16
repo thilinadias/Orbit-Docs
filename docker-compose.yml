@@ -16,6 +16,8 @@ services:
       - orbitdocs_ssl:/etc/nginx/ssl
     networks:
       - orbitdocs-network
+    depends_on:
+      - db
 
   web:
     image: nginx:alpine
