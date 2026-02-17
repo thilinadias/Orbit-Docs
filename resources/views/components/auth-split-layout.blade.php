@@ -29,18 +29,21 @@
                 <div class="relative z-10 flex flex-col items-center text-center max-w-lg">
                     <!-- Logo -->
                     <div class="mb-8 p-4 bg-white/10 backdrop-blur-sm rounded-2xl shadow-xl">
-                        {{-- Force Default Logo for now --}}
-                        <x-application-logo class="w-24 h-24 fill-current text-white" />
+                        @if($logo = \App\Models\Setting::get('system_logo'))
+                            <img src="{{ asset('storage/' . $logo) }}" alt="Logo" class="w-24 h-24 object-contain">
+                        @else
+                            <x-application-logo class="w-24 h-24 fill-current text-white" />
+                        @endif
                     </div>
                     
                     <!-- System Name -->
                     <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
-                        OrbitDocs
+                        {{ \App\Models\Setting::get('system_name', 'OrbitDocs') }}
                     </h1>
                     
                     <!-- Tagline/Description -->
                     <p class="text-lg text-gray-300 mb-8 font-light">
-                        Secure Documentation & Asset Management for MSPs.
+                        {{ \App\Models\Setting::get('system_description', 'Secure Documentation & Asset Management for MSPs.') }}
                     </p>
 
                     <p class="text-sm text-gray-400 font-medium">
