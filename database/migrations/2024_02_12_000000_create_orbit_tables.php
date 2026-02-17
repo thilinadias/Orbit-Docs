@@ -12,34 +12,42 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Organizations
-        Schema::create('organizations', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('logo')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('organizations')) {
+            Schema::create('organizations', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->string('logo')->nullable();
+                $table->timestamps();
+            });
+        }
 
         // 2. Roles & Permissions (Simple RBAC)
-        Schema::create('roles', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique(); // Super Admin, Admin, Technician, Read-Only
-            $table->string('label')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('roles')) {
+            Schema::create('roles', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique(); // Super Admin, Admin, Technician, Read-Only
+                $table->string('label')->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('permissions', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('label')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('permissions')) {
+            Schema::create('permissions', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->string('label')->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('permission_role', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('role_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('permission_id')->constrained()->cascadeOnDelete();
-        });
+        if (!Schema::hasTable('permission_role')) {
+            Schema::create('permission_role', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('role_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('permission_id')->constrained()->cascadeOnDelete();
+            });
+        }
 
         // 3. Organization User Pivot with Role
         Schema::dropIfExists('organization_user');
@@ -54,127 +62,151 @@ return new class extends Migration
         });
 
         // 4. Asset Management
-        Schema::create('asset_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name'); // Server, Laptop, Licence, etc.
-            $table->string('icon')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('asset_types')) {
+            Schema::create('asset_types', function (Blueprint $table) {
+                $table->id();
+                $table->string('name'); // Server, Laptop, Licence, etc.
+                $table->string('icon')->nullable();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('assets', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('asset_type_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
-            $table->string('serial_number')->nullable();
-            $table->date('purchase_date')->nullable();
-            $table->date('warranty_expire_date')->nullable();
-            $table->string('status')->default('active'); // active, archived, broken
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('assets')) {
+            Schema::create('assets', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('asset_type_id')->constrained()->cascadeOnDelete();
+                $table->string('name');
+                $table->string('serial_number')->nullable();
+                $table->date('purchase_date')->nullable();
+                $table->date('warranty_expire_date')->nullable();
+                $table->string('status')->default('active'); // active, archived, broken
+                $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('asset_custom_fields', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('asset_type_id')->constrained()->cascadeOnDelete();
-            $table->string('name'); // e.g. "IP Address", "CPU", "RAM"
-            $table->string('field_type')->default('text'); // text, date, number, select
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('asset_custom_fields')) {
+            Schema::create('asset_custom_fields', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('asset_type_id')->constrained()->cascadeOnDelete();
+                $table->string('name'); // e.g. "IP Address", "CPU", "RAM"
+                $table->string('field_type')->default('text'); // text, date, number, select
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('asset_values', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('asset_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('asset_custom_field_id')->constrained()->cascadeOnDelete();
-            $table->text('value')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('asset_values')) {
+            Schema::create('asset_values', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('asset_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('asset_custom_field_id')->constrained()->cascadeOnDelete();
+                $table->text('value')->nullable();
+                $table->timestamps();
+            });
+        }
 
         // 5. Credentials Vault
-        Schema::create('credentials', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('asset_id')->nullable()->constrained()->nullOnDelete(); // Optional link to asset
-            $table->string('title');
-            $table->string('username')->nullable();
-            $table->text('encrypted_password'); // Will use Laravel Crypt
-            $table->string('url')->nullable();
-            $table->text('notes')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('credentials')) {
+            Schema::create('credentials', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('asset_id')->nullable()->constrained()->nullOnDelete(); // Optional link to asset
+                $table->string('title');
+                $table->string('username')->nullable();
+                $table->text('encrypted_password'); // Will use Laravel Crypt
+                $table->string('url')->nullable();
+                $table->text('notes')->nullable();
+                $table->timestamps();
+            });
+        }
 
         // 6. Documentation System
-        Schema::create('folders', function (Blueprint $table) { // Optional structure
-            $table->id();
-            $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('parent_id')->nullable()->constrained('folders')->cascadeOnDelete();
-            $table->string('name');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('folders')) {
+            Schema::create('folders', function (Blueprint $table) { // Optional structure
+                $table->id();
+                $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('parent_id')->nullable()->constrained('folders')->cascadeOnDelete();
+                $table->string('name');
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('documents', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('folder_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('title');
-            $table->longText('content')->nullable(); // Markdown
-            $table->boolean('is_public')->default(false);
-            $table->foreignId('last_modified_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
+        if (!Schema::hasTable('documents')) {
+            Schema::create('documents', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('folder_id')->nullable()->constrained()->nullOnDelete();
+                $table->string('title');
+                $table->longText('content')->nullable(); // Markdown
+                $table->boolean('is_public')->default(false);
+                $table->foreignId('last_modified_by')->nullable()->constrained('users')->nullOnDelete();
+                $table->timestamps();
 
-        // Fulltext index manually added if needed, or via DB statement
-        });
+            // Fulltext index manually added if needed, or via DB statement
+            });
+        }
 
         // Fulltext index for MySQL 8
         if (DB::getDriverName() !== 'sqlite') {
             DB::statement('ALTER TABLE documents ADD FULLTEXT fulltext_index (title, content)');
         }
 
-        Schema::create('document_versions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('document_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->longText('content');
-            $table->timestamps(); // Created at = version date
-        });
+        if (!Schema::hasTable('document_versions')) {
+            Schema::create('document_versions', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('document_id')->constrained()->cascadeOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->longText('content');
+                $table->timestamps(); // Created at = version date
+            });
+        }
 
         // 7. Tags
-        Schema::create('tags', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->string('color')->default('gray');
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('tags')) {
+            Schema::create('tags', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->string('slug')->unique();
+                $table->string('color')->default('gray');
+                $table->timestamps();
+            });
+        }
 
-        Schema::create('taggables', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
-            $table->morphs('taggable'); // asset, document, credential
-        });
+        if (!Schema::hasTable('taggables')) {
+            Schema::create('taggables', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('tag_id')->constrained()->cascadeOnDelete();
+                $table->morphs('taggable'); // asset, document, credential
+            });
+        }
 
         // 8. Relationships (Many-to-Many Linking)
-        Schema::create('relationships', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-            $table->morphs('source'); // e.g. asset:1
-            $table->morphs('target'); // e.g. document:5
-            $table->string('type')->nullable(); // "installed_on", "depends_on"
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('relationships')) {
+            Schema::create('relationships', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
+                $table->morphs('source'); // e.g. asset:1
+                $table->morphs('target'); // e.g. document:5
+                $table->string('type')->nullable(); // "installed_on", "depends_on"
+                $table->timestamps();
+            });
+        }
 
         // 9. Activity Logs
-        Schema::create('activity_logs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('organization_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('action'); // create, update, delete, view_credential
-            $table->nullableMorphs('subject'); // The item changed
-            $table->text('description')->nullable();
-            $table->json('properties')->nullable(); // Old/New values
-            $table->string('ip_address')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('activity_logs')) {
+            Schema::create('activity_logs', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('organization_id')->nullable()->constrained()->cascadeOnDelete();
+                $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+                $table->string('action'); // create, update, delete, view_credential
+                $table->nullableMorphs('subject'); // The item changed
+                $table->text('description')->nullable();
+                $table->json('properties')->nullable(); // Old/New values
+                $table->string('ip_address')->nullable();
+                $table->timestamps();
+            });
+        }
     }
 
     /**
