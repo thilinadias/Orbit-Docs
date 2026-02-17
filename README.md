@@ -45,6 +45,16 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
         -   Create your Super Admin Account.
         -   Configure Domain & SSL.
 
+### Crucial: First Run Build
+
+**On the very first run, you must use the `--build` flag to create the application image locally.**
+
+```bash
+docker-compose up -d --build
+```
+
+If you do not run with `--build`, you may see a "pull access denied" error.
+
 ---
 
 ## Manual Configuration (Advanced)
