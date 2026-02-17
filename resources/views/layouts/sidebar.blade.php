@@ -13,10 +13,9 @@
        @scroll.debounce.100ms="saveScroll">
     <div class="py-4 text-gray-500 dark:text-gray-400">
         <a class="ml-6 text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center" href="{{ route('root') }}">
-            @if($logo = \App\Models\Setting::get('system_logo'))
-                <img src="{{ asset('storage/' . $logo) }}" alt="System Logo" class="h-8 w-auto mr-3">
-            @endif
-            <span>{{ \App\Models\Setting::get('system_name', 'OrbitDocs') }}</span>
+            {{-- Force Default Logo --}}
+            <x-application-logo class="h-8 w-8 mr-3 fill-current text-purple-600" />
+            <span>OrbitDocs</span>
         </a>
         @if(isset($currentOrganization))
         <div class="px-6 py-2 mt-2 flex items-center">
