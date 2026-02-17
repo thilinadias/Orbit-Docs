@@ -25,8 +25,17 @@
                     </div>
                      <div class="flex flex-col">
                         <span class="text-xs font-semibold text-gray-500 uppercase dark:text-gray-400">Status</span>
-                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $document->approval_status === 'Approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' }}">
-                            {{ $document->approval_status ?? 'Draft' }}
+                        @php
+                            $statusColors = [
+                                'draft' => 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
+                                'review' => 'bg-yellow-100 text-yellow-800',
+                                'published' => 'bg-green-100 text-green-800',
+                            ];
+                            $status = $document->approval_status ?? 'draft';
+                            $color = $statusColors[$status] ?? $statusColors['draft'];
+                        @endphp
+                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full w-fit {{ $color }}">
+                            {{ ucfirst($status) }}
                         </span>
                     </div>
                     <div class="flex flex-col">
@@ -47,12 +56,10 @@
             <div class="p-4 bg-white rounded-lg shadow-md dark:bg-gray-800">
                 <h5 class="mb-3 font-semibold text-gray-600 dark:text-gray-300">Tags</h5>
                  <div class="flex flex-wrap gap-2">
-                    @forelse(explode(',', $document->tags) as $tag)
-                        @if(trim($tag))
+                    @forelse($document->tags as $tag)
                         <span class="px-2 py-1 text-xs font-medium text-gray-600 bg-gray-100 rounded-full dark:bg-gray-700 dark:text-gray-300">
-                            {{ trim($tag) }}
+                            {{ $tag->name }}
                         </span>
-                        @endif
                     @empty
                         <span class="text-xs text-gray-500">No tags</span>
                     @endforelse

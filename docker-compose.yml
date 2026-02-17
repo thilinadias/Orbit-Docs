@@ -11,7 +11,7 @@ services:
     volumes:
       - orbitdocs_data:/var/www/storage/app
       - orbitdocs_env:/var/www/env_storage
-      # - ./:/var/www # Development mount (Optional: Remove for prod image build)
+      - ./:/var/www # Development mount (Optional: Remove for prod image build)
       - ./storage/logs:/var/www/storage/logs
       - orbitdocs_ssl:/etc/nginx/ssl
     networks:
