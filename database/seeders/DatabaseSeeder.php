@@ -20,27 +20,27 @@ class DatabaseSeeder extends Seeder
     {
         // 1. Run RBAC Seeder (Creates Roles & Permissions)
         $this->call([
-            RolesPermissionsSeeder::class,
-            ITGlueAssetSeeder::class,
+            RolesPermissionsSeeder::class ,
+            ITGlueAssetSeeder::class ,
             // ITGlueDemoDataSeeder::class, // Optional: Comment out if not needed for production
         ]);
 
-        // Default Admin User
-        $user = User::create([
-            'name' => 'Admin User',
-            'email' => 'admin@orbitdocs.com',
-            'password' => Hash::make('password'),
-        ]);
+        // Default Admin User - SKIPPED FOR INSTALLER FLOW
+        // $user = User::create([
+        //     'name' => 'Admin User',
+        //     'email' => 'admin@orbitdocs.com',
+        //     'password' => Hash::make('password'),
+        // ]);
 
-        // Default Organization
-        $org = Organization::create([
-            'name' => 'Demo MSP',
-            'slug' => 'demo-msp',
-        ]);
+        // Default Organization - SKIPPED FOR INSTALLER FLOW
+        // $org = Organization::create([
+        //     'name' => 'Demo MSP',
+        //     'slug' => 'demo-msp',
+        // ]);
 
-        // Assign User to Org with Admin Role
-        $adminRole = Role::where('name', 'Admin')->first();
-        $org->users()->attach($user->id, ['role_id' => $adminRole->id]);
+        // Assign User to Org with Admin Role - SKIPPED
+        // $adminRole = Role::where('name', 'Admin')->first();
+        // $org->users()->attach($user->id, ['role_id' => $adminRole->id]);
 
         // Asset Types
         $types = ['Server', 'Workstation', 'Firewall', 'Switch', 'License', 'Domain'];

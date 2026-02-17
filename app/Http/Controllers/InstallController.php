@@ -92,6 +92,10 @@ class InstallController extends Controller
     public function runMigrations()
     {
         try {
+            // Ensure no stale session exists which might cause ActivityLog to blame a non-existent user
+            \Illuminate\Support\Facades\Auth::logout();
+            \Illuminate\Support\Facades\Session::flush();
+
             Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
             // Output might be captured if we want to show it
             return response()->json(['success' => true, 'message' => 'Migrations and Seeding completed successfully.']);
