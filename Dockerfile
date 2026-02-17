@@ -32,7 +32,9 @@ WORKDIR /var/www
 # Copy existing application directory contents
 COPY . /var/www
 
+# Install dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
+
 
 # Copy .env.example to .env (will be overwritten by volume if present, but ensures file exists for build)
 RUN cp .env.example .env
