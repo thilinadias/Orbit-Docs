@@ -27,33 +27,40 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
 1.  **Clone the Repository**
     ```bash
     git clone https://github.com/thilinadias/orbit-docs.git
-    cd OrbitDocs
+    cd orbit-docs
     ```
 
-2.  **Start the Application**
+2.  **Start and Build the Application**
+    **Important:** You must use the `--build` flag on the first run to ensure the latest code is used.
     ```bash
-    docker-compose up -d
+    docker-compose up -d --build
     ```
 
-3.  **Run the Web Installer**
-    -   Open your browser and navigate to `http://localhost` (or your server's IP).
-    -   You will be redirected to the **OrbitDocs Installer**.
-    -   Follow the on-screen steps to:
-        -   Verify System Requirements.
-        -   Configure the Database (Defaults are pre-filled for Docker).
-        -   Run Migrations & Seed Data.
-        -   Create your Super Admin Account.
-        -   Configure Domain & SSL.
+3.  **Run Database Migrations**
+    Run the migrations to set up the database schema and seed default data.
+    ```bash
+    docker-compose exec app php artisan migrate:fresh --seed
+    ```
+    *Note: The migration script is idempotent and safe to run multiple times.*
 
-### Crucial: First Run Build
+4.  **Access the Application**
+    Open your browser and navigate to `http://localhost` (or your server's IP).
 
-**On the very first run, you must use the `--build` flag to create the application image locally.**
+### Troubleshooting Installation
 
-```bash
-docker-compose up -d --build
-```
+**Installer Timeout / Stuck?**
+If the web installer times out (504 Gateway Timeout) due to long-running migrations, you can manually bypass it:
+1.  Run the migrations via CLI (step 3 above).
+2.  Run this command to mark the app as installed:
+    ```bash
+    docker-compose exec app touch storage/app/installed
+    ```
+3.  Refresh your browser.
 
-If you do not run with `--build`, you may see a "pull access denied" error.
+**Default Login Credentials**
+If you used the seeder (step 3), the default admin account is:
+*   **Email:** `admin@orbitdocs.com`
+*   **Password:** `password`
 
 ---
 
