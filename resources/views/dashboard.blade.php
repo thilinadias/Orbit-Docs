@@ -86,7 +86,7 @@
                     {!! $organization->notes !!}
                 </div>
 
-                <form x-show="editing" action="{{ route('organizations.notes.update', $organization->id) }}" method="POST" id="notes-form">
+                <form x-show="editing" action="{{ route('organizations.notes.update', $organization->slug) }}" method="POST" id="notes-form">
                     @csrf
                     <textarea id="notes_editor" name="notes">{{ $organization->notes }}</textarea>
                     <div class="mt-3 flex justify-end space-x-2">
