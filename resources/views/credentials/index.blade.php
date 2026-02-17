@@ -31,7 +31,7 @@
                         </td>
                         <td class="px-4 py-3 text-sm">
                             <span class="font-mono">{{ $credential->username ?? '-' }}</span>
-                            <button class="ml-2 text-gray-500 hover:text-gray-700" onclick="navigator.clipboard.writeText('{{ $credential->username }}')" title="Copy Username">
+                            <button class="ml-2 text-gray-500 hover:text-gray-700" onclick="copyToClipboard('{{ $credential->username }}')" title="Copy Username">
                                 <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                             </button>
                         </td>
@@ -48,7 +48,7 @@
                                             setTimeout(() => { password = '••••••••'; revealed = false; }, 30000); // Auto hide
                                         });
                                     } else {
-                                        navigator.clipboard.writeText(password);
+                                        copyToClipboard(password);
                                         // Optional feedback
                                     }
                                 " class="ml-2 text-purple-600 hover:text-purple-800 focus:outline-none">
