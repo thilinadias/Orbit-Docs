@@ -96,14 +96,13 @@ If you already have Orbit-Docs running and want to apply the latest fixes:
 
 ## Troubleshooting
 
-**Installer Timeout / Stuck?**
-If the web installer times out (504 Gateway Timeout) due to long-running migrations, you can manually bypass it:
-1.  Run the migrations via CLI (step 3 in Quick Start).
-2.  Run this command to mark the app as installed:
-    ```bash
-    docker-compose exec app touch storage/app/installed
-    ```
-3.  Refresh your browser.
+**Installer Timeout / "SyntaxError: Unexpected token <"**
+This error occurs when the migration process takes longer than the web server's timeout limit (returning an HTML 504 Gateway Timeout error instead of JSON).
+*   **Fix:** We have patched this in the latest version by increasing the timeout to 300 seconds. Please `git pull` and `docker-compose up -d --build`.
+*   **Manual Bypass:** If you still face issues, you can run migrations manually via CLI:
+    1.  `docker-compose exec app php artisan migrate:fresh --seed`
+    2.  `docker-compose exec app touch storage/app/installed`
+    3.  Refresh the page.
 
 **Default Login Credentials (If Seeder Used)**
 *   **Email:** `admin@orbitdocs.com`
