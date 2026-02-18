@@ -16,7 +16,12 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text || response.statusText) });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     this.output += data.message + '\n';
@@ -27,8 +32,14 @@
                 }
             })
             .catch(err => {
-                this.error = 'An unexpected error occurred.';
-                this.output += 'System Error: ' + err + '\n';
+                console.error(err);
+                this.error = 'Migration failed. Check logs.';
+                // Check if error is HTML (common with 500/504)
+                if (err.message && err.message.trim().startsWith('<')) {
+                     this.output += 'Server Error (Likely Timeout). Please check container logs.\n';
+                } else {
+                     this.output += 'System Error: ' + err.message + '\n';
+                }
             })
             .finally(() => {
                 this.running = false;
