@@ -78,7 +78,7 @@
                     <a class="ml-6 text-lg font-bold text-gray-800 dark:text-gray-200" href="#">OrbitDocs</a>
                     <ul class="mt-6">
                         <li class="relative px-6 py-3">
-                             <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200" href="{{ route('dashboard', $currentOrganization->slug ?? 'demo-msp') }}">
+                             <a class="inline-flex items-center w-full text-sm font-semibold transition-colors duration-150 hover:text-gray-800 dark:hover:text-gray-200" href="{{ route('dashboard', $currentOrganization->slug ?? Auth::user()->organizations->first()->slug ?? '#') }}">
                                 <span class="ml-4">Dashboard</span>
                             </a>
                         </li>
@@ -136,7 +136,7 @@
 
                             @if($topNav ?? false)
                                 <nav class="hidden md:flex items-center space-x-6">
-                                    <a href="{{ route('dashboard', $currentOrganization->slug ?? 'demo-msp') }}" class="text-xs font-bold uppercase tracking-widest {{ request()->routeIs('dashboard') ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }} pb-1 transition-colors">Dashboard</a>
+                                    <a href="{{ route('dashboard', $currentOrganization->slug ?? Auth::user()->organizations->first()->slug ?? '#') }}" class="text-xs font-bold uppercase tracking-widest {{ request()->routeIs('dashboard') ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }} pb-1 transition-colors">Dashboard</a>
                                     <a href="{{ route('organizations.index') }}" class="text-xs font-bold uppercase tracking-widest {{ request()->routeIs('organizations.index') ? 'text-purple-600 dark:text-purple-400 border-b-2 border-purple-600' : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }} pb-1 transition-colors">Organizations</a>
                                     
                                     @can('user.view')

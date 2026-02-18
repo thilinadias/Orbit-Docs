@@ -13,6 +13,19 @@
 - **Activity Logs**: Audit trail for all changes.
 - **Modern UI**: Clean, dark-mode compatible interface built with TailwindCSS and Alpine.js.
 
+## Recent Updates (February 2026)
+
+### Key Improvements
+- **Installer Flow:** Added a new step to automatically create your first Organization during installation. 
+- **Bug Fixes:** 
+    - Resolved "Table already exists" errors during migration.
+    - Fixed "Column not found: role" error when creating organizations.
+    - Fixed infinite redirect loop on the Global Dashboard (demo-msp issue).
+    - Fixed "slug on string" crash when editing documents.
+- **Document Management:** Added support for Tags, Categories, Authors, and Approval Statuses.
+
+---
+
 ## Installation via Docker (Recommended)
 
 OrbitDocs is designed to be installed easily using Docker. This method includes a built-in **Web Installer** that guides you through the setup process.
@@ -22,7 +35,7 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
 - Docker Engine
 - Docker Compose
 
-### Quick Start
+### Quick Start (New Installation)
 
 1.  **Clone the Repository**
     ```bash
@@ -31,34 +44,67 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
     ```
 
 2.  **Start and Build the Application**
-    **Important:** You must use the `--build` flag on the first run to ensure the latest code is used.
+    **Important:** You must use the `--build` flag on the first run to ensure the latest code and fixes are used.
     ```bash
     docker-compose up -d --build
     ```
 
 3.  **Run Database Migrations**
-    Run the migrations to set up the database schema and seed default data.
+    Run the migrations to set up the database schema.
     ```bash
     docker-compose exec app php artisan migrate:fresh --seed
     ```
-    *Note: The migration script is idempotent and safe to run multiple times.*
+    *Note: The migration script is now idempotent and safe to run multiple times.*
 
-4.  **Access the Application**
+4.  **Access the Installer**
     Open your browser and navigate to `http://localhost` (or your server's IP).
+    - Follow the on-screen wizard.
+    - Create your Admin Account.
+    - **Create your Organization** (This will be your main workspace).
+    - You will be automatically redirected to your new dashboard.
 
-### Troubleshooting Installation
+### Updating Existing Installations
+
+If you already have Orbit-Docs running and want to apply the latest fixes:
+
+1.  **Pull the Latest Code**
+    Navigate to your project directory:
+    ```bash
+    cd orbit-docs
+    git pull origin master
+    ```
+
+2.  **Rebuild Containers**
+    This is critical to apply fixes to the views and controller logic:
+    ```bash
+    docker-compose up -d --build
+    ```
+
+3.  **Run Migrations**
+    Update your database schema (adds support for document status, tags, etc.):
+    ```bash
+    docker-compose exec app php artisan migrate
+    ```
+
+4.  **Clear Caches**
+    Ensure the latest configuration and views are loaded:
+    ```bash
+    docker-compose exec app php artisan config:clear
+    docker-compose exec app php artisan view:clear
+    ```
+
+## Troubleshooting
 
 **Installer Timeout / Stuck?**
 If the web installer times out (504 Gateway Timeout) due to long-running migrations, you can manually bypass it:
-1.  Run the migrations via CLI (step 3 above).
+1.  Run the migrations via CLI (step 3 in Quick Start).
 2.  Run this command to mark the app as installed:
     ```bash
     docker-compose exec app touch storage/app/installed
     ```
 3.  Refresh your browser.
 
-**Default Login Credentials**
-If you used the seeder (step 3), the default admin account is:
+**Default Login Credentials (If Seeder Used)**
 *   **Email:** `admin@orbitdocs.com`
 *   **Password:** `password`
 
