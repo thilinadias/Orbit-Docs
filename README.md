@@ -97,9 +97,14 @@ If you already have Orbit-Docs running and want to apply the latest fixes:
 ## Troubleshooting
 
 **Installer Timeout / "SyntaxError: Unexpected token <"**
-This error occurs when the migration process takes longer than the web server's timeout limit (returning an HTML 504 Gateway Timeout error instead of JSON).
-*   **Fix:** We have patched this in the latest version by increasing the timeout to 300 seconds. Please `git pull` and `docker-compose up -d --build`.
-*   **Manual Bypass:** If you still face issues, you can run migrations manually via CLI:
+This error occurs when the migration process takes longer than the default 60-second timeout.
+*   **Fix:** We have added a custom `docker/php/local.ini` configuration to increase execution time to 5 minutes (300s).
+*   **Update Required:** You **MUST** rebuild your containers for this change to take effect:
+    ```bash
+    git pull origin master
+    docker-compose up -d --build
+    ```
+*   **Manual Bypass:** If you still face issues, run migrations via CLI:
     1.  `docker-compose exec app php artisan migrate:fresh --seed`
     2.  `docker-compose exec app touch storage/app/installed`
     3.  Refresh the page.
