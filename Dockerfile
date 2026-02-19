@@ -23,6 +23,9 @@ RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd zip
 
+# Copy Custom PHP Config
+COPY docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
+
 # Get latest Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -34,6 +37,10 @@ COPY . /var/www
 
 # Install dependencies
 RUN composer install --no-interaction --optimize-autoloader --no-dev
+
+# Build Frontend Assets
+RUN npm install
+RUN npm run build
 
 
 # Copy .env.example to .env (will be overwritten by volume if present, but ensures file exists for build)
