@@ -2,7 +2,8 @@
 
 **OrbitDocs** is an open-source IT Documentation Platform designed for MSPs, internal IT teams, and system administrators. It serves as a centralized hub for managing assets, credentials, and documentation with multi-organization support.
 
-![OrbitDocs Dashboard Placeholder](https://via.placeholder.com/800x400?text=OrbitDocs+Dashboard)
+<img width="1918" height="954" alt="10" src="https://github.com/user-attachments/assets/d99246d9-2e0c-4a30-92df-e12609641b0b" />
+
 
 ## Features
 
