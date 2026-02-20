@@ -100,7 +100,7 @@ class DashboardController extends Controller
                 'name' => '[' . $mspName . '/' . $item->name . ']',
                 'slug' => $item->organization->slug ?? '#',
                 'logo' => $item->logo ?? $item->organization->logo ?? null,
-                'url' => route('sites.show', ['organization' => $item->organization->slug ?? $organizations->first()->slug ?? 'orbit', 'site' => $item->id]),
+                'url' => route('sites.show', ['organization' => $item->organization->slug ?? 'orbit', 'site' => $item->id]),
                 'type' => 'site'
                 ];
             }

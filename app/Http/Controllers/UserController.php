@@ -8,6 +8,7 @@ use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -23,16 +24,16 @@ class UserController extends Controller
         $query = User::with(['organizations']);
 
         if ($request->has('organization_id') && $request->organization_id) {
-            $query->whereHas('organizations', function($q) use ($request) {
+            $query->whereHas('organizations', function ($q) use ($request) {
                 $q->where('organizations.id', $request->organization_id);
             });
         }
 
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -93,7 +94,7 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        //
+    //
     }
 
     /**
@@ -106,7 +107,7 @@ class UserController extends Controller
         $organizations = Organization::orderBy('name')->get();
         $roles = Role::orderBy('name')->get();
         $permissions = \App\Models\Permission::all()->groupBy('module');
-        
+
         return view('users.edit', compact('user', 'organizations', 'roles', 'permissions'));
     }
 
@@ -120,7 +121,7 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
             'status' => 'required|in:active,disabled',
             'password' => 'nullable|string|min:8|confirmed',
             'is_2fa_enforced' => 'nullable',
@@ -130,20 +131,20 @@ class UserController extends Controller
         $user->email = $validated['email'];
         $user->status = $validated['status'];
         $user->is_2fa_enforced = $request->has('is_2fa_enforced');
-        
+
         // Reset 2FA if requested
         if ($request->has('reset_2fa')) {
             $user->google2fa_secret = null;
             $user->two_factor_recovery_codes = null;
-             // If we reset, they are no longer "enabled", so if enforced, they will be forced to setup again next login.
+        // If we reset, they are no longer "enabled", so if enforced, they will be forced to setup again next login.
         }
-        
+
         if ($request->filled('password')) {
             $user->password = Hash::make($validated['password']);
         }
 
         $user->save();
-        
+
         // Handle organization assignment updates in a separate method or here if simple
         // For strict RBAC, specific org-role management might be better done via API/modal
         // But for update form, we can manage existing pivots?
@@ -166,9 +167,9 @@ class UserController extends Controller
     public function attachOrganization(Request $request, User $user)
     {
         $this->authorize('user.manage');
-        
+
         // Remove debug dump
-        
+
         try {
             $validated = $request->validate([
                 'organization_ids' => 'required|array|min:1',
@@ -198,12 +199,13 @@ class UserController extends Controller
             foreach ($validated['organization_ids'] as $orgId) {
                 // Check explicitly in DB to avoid stale cache issues
                 $exists = $user->organizations()->where('organization_id', $orgId)->exists();
-                
+
                 if ($exists) {
                     // Update existing
                     $user->organizations()->updateExistingPivot($orgId, $pivotData);
                     $updateCount++;
-                } else {
+                }
+                else {
                     // Attach new
                     $user->organizations()->attach($orgId, $pivotData);
                     $successCount++;
@@ -211,13 +213,15 @@ class UserController extends Controller
             }
 
             $msg = "Successfully assigned to {$successCount} organization(s) and updated {$updateCount} existing assignments.";
-            \Log::info('Organization attachment successful', ['message' => $msg]);
-            
+            Log::info('Organization attachment successful', ['message' => $msg]);
+
             return redirect()->back()->with('success', $msg);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        }
+        catch (\Illuminate\Validation\ValidationException $e) {
             return redirect()->back()->withErrors($e->errors())->withInput();
-        } catch (\Exception $e) {
-            \Log::error('Organization attachment failed', ['error' => $e->getMessage()]);
+        }
+        catch (\Exception $e) {
+            Log::error('Organization attachment failed', ['error' => $e->getMessage()]);
             return redirect()->back()->with('error', 'Failed to assign: ' . $e->getMessage());
         }
     }

@@ -9,32 +9,35 @@ use App\Models\Document;
 use App\Models\Credential;
 use App\Models\Contact;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class SearchController extends Controller
 {
     public function index(Request $request)
     {
         $query = $request->get('q');
-        
+
         if (empty($query)) {
             return response()->json([]);
         }
 
         $user = Auth::user();
-        if (!$user) return response()->json([]);
+        if (!$user)
+            return response()->json([]);
 
         $isAdmin = false;
         try {
             if (method_exists($user, 'hasRole')) {
                 $isAdmin = $user->hasRole('Super Admin');
             }
-        } catch (\Exception $e) {
-            \Log::error('Role check failed', ['error' => $e->getMessage()]);
+        }
+        catch (\Exception $e) {
+            Log::error('Role check failed', ['error' => $e->getMessage()]);
         }
 
         // Fallback: If user is email 'admin@example.com' or has specific role string/ID
         // (Adjust this based on actual app logic if known, otherwise isAdmin stays false)
-        
+
         // If not super admin, restrict to their organizations
         $orgIds = $isAdmin ? null : $user->organizations->pluck('id');
 
@@ -65,19 +68,19 @@ class SearchController extends Controller
         }
 
         // Search Assets
-        $assetQuery = Asset::where(function($q) use ($query) {
+        $assetQuery = Asset::where(function ($q) use ($query) {
             $q->where('name', 'LIKE', "%{$query}%")
-              ->orWhere('serial_number', 'LIKE', "%{$query}%")
-              ->orWhere('asset_tag', 'LIKE', "%{$query}%")
-              ->orWhere('ip_address', 'LIKE', "%{$query}%")
-              ->orWhere('manufacturer', 'LIKE', "%{$query}%")
-              ->orWhere('model', 'LIKE', "%{$query}%");
+                ->orWhere('serial_number', 'LIKE', "%{$query}%")
+                ->orWhere('asset_tag', 'LIKE', "%{$query}%")
+                ->orWhere('ip_address', 'LIKE', "%{$query}%")
+                ->orWhere('manufacturer', 'LIKE', "%{$query}%")
+                ->orWhere('model', 'LIKE', "%{$query}%");
         });
-            
+
         if (!$isAdmin) {
             $assetQuery->whereIn('organization_id', $orgIds);
         }
-        
+
         $assets = $assetQuery->with(['type', 'organization'])->take(8)->get();
 
         foreach ($assets as $asset) {
@@ -103,7 +106,7 @@ class SearchController extends Controller
         if (!$isAdmin) {
             $docQuery->whereIn('organization_id', $orgIds);
         }
-        
+
         $documents = $docQuery->with('organization')->take(5)->get();
 
         foreach ($documents as $doc) {
@@ -123,15 +126,15 @@ class SearchController extends Controller
 
         // Search Credentials
         // FIX: Using 'title' instead of 'name'
-        $credQuery = Credential::where(function($q) use ($query) {
+        $credQuery = Credential::where(function ($q) use ($query) {
             $q->where('title', 'LIKE', "%{$query}%")
-              ->orWhere('username', 'LIKE', "%{$query}%");
+                ->orWhere('username', 'LIKE', "%{$query}%");
         });
-            
+
         if (!$isAdmin) {
             $credQuery->whereIn('organization_id', $orgIds);
         }
-        
+
         $credentials = $credQuery->with('organization')->take(5)->get();
 
         foreach ($credentials as $cred) {
@@ -151,16 +154,16 @@ class SearchController extends Controller
         }
 
         // Search Contacts
-        $contactQuery = Contact::where(function($q) use ($query) {
-                $q->where('first_name', 'LIKE', "%{$query}%")
-                  ->orWhere('last_name', 'LIKE', "%{$query}%")
-                  ->orWhere('email', 'LIKE', "%{$query}%");
-            });
-            
+        $contactQuery = Contact::where(function ($q) use ($query) {
+            $q->where('first_name', 'LIKE', "%{$query}%")
+                ->orWhere('last_name', 'LIKE', "%{$query}%")
+                ->orWhere('email', 'LIKE', "%{$query}%");
+        });
+
         if (!$isAdmin) {
             $contactQuery->whereIn('organization_id', $orgIds);
         }
-        
+
         $contacts = $contactQuery->with('organization')->take(5)->get();
 
         foreach ($contacts as $contact) {
