@@ -148,9 +148,18 @@ return new class extends Migration
             });
         }
 
-        // Fulltext index for MySQL 8
+        // Fulltext index for MySQL 8 — only add if not already present
         if (DB::getDriverName() !== 'sqlite') {
-            DB::statement('ALTER TABLE documents ADD FULLTEXT fulltext_index (title, content)');
+            $dbName = DB::connection()->getDatabaseName();
+            $existing = DB::select(
+                "SELECT INDEX_NAME FROM information_schema.STATISTICS
+                  WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'documents'
+                    AND INDEX_NAME = 'fulltext_index'",
+            [$dbName]
+            );
+            if (empty($existing)) {
+                DB::statement('ALTER TABLE documents ADD FULLTEXT fulltext_index (title, content)');
+            }
         }
 
         if (!Schema::hasTable('document_versions')) {
