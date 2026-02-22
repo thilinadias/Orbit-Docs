@@ -16,9 +16,22 @@
 
 ## Recent Updates (February 2026)
 
-### Key Improvements
-- **Installer Flow:** Added a new step to automatically create your first Organization during installation. 
-- **Bug Fixes:** 
+### Production Deployment Fixes (v1.1 — Feb 22 2026)
+
+A comprehensive overhaul of the Docker deployment pipeline to make production deployments reliable:
+
+- **Critical Fix — Stale Code on Re-deploy:** The entrypoint now uses `rsync` on every container start, so code updates from a rebuilt image are always applied. Previously, the production server permanently ran the first-deployed version of the code.
+- **Critical Fix — MySQL Healthcheck:** The DB healthcheck was silently failing on every boot (Docker does not expand `${VARIABLES}` in CMD-array format). Fixed to use `CMD-SHELL`. The `app` container now correctly waits for a healthy database before starting.
+- **Security — Debug Files Removed:** Development helper scripts (`debug_roles.php`, `fix_cred_perm.php`, `force_suspend.php`, etc.) have been removed from the repository. They were being baked into the production Docker image.
+- **Startup UX:** A branded maintenance page now shows instead of a raw browser 502 error while the app initialises. It auto-refreshes every 8 seconds.
+- **Dockerfile:** Removed unnecessary `nginx` from the php-fpm container (~50MB saved). Added `rsync`.
+- **PHP Config:** Fixed Windows CRLF line endings in `local.ini` that caused PHP to misread config values. `max_execution_time` now correctly set to `300s` for all requests (the installer sets `0` itself for migrations).
+- **Environment:** `.env.example` updated with production-safe defaults (`APP_ENV=production`, `APP_DEBUG=false`, correct Docker service names pre-set).
+- **Volumes:** Replaced host bind-mount for `storage/logs` with a named Docker volume to prevent root-ownership issues on fresh servers.
+
+### Key Improvements (Earlier February 2026)
+- **Installer Flow:** Added a new step to automatically create your first Organization during installation.
+- **Bug Fixes:**
     - Resolved "Table already exists" errors during migration.
     - Fixed "Column not found: role" error when creating organizations.
     - Fixed infinite redirect loop on the Global Dashboard (demo-msp issue).
@@ -44,71 +57,70 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
     cd orbit-docs
     ```
 
-2.  **Start and Build the Application**
-    **Important:** You must use the `--build` flag on the first run to ensure the latest code and fixes are used.
+2.  **Build and Start**
     ```bash
     docker-compose up -d --build
     ```
-    *Note: The `docker-compose.yml` is configured for production by default. If you want to enable hot-reloading for development, uncomment the `./:/var/www` volume in the `app` service.*
+    The containers will start. The app automatically:
+    - Waits for MySQL to become healthy before starting
+    - Runs any pending database migrations in the background
+    - Shows a branded loading page while initialising (instead of a 502 error)
 
-3.  **Run Database Migrations**
-    Run the migrations to set up the database schema.
-    ```bash
-    docker-compose exec app php artisan migrate:fresh --seed
-    ```
-    *Note: The migration script is now idempotent and safe to run multiple times.*
+3.  **Access the Installer**
+    Open your browser and navigate to `http://<your-server-ip>`.
+    - Follow the on-screen wizard
+    - Create your Admin Account
+    - Create your first Organization (your main workspace)
+    - You will be automatically redirected to your new dashboard
 
-4.  **Access the Installer**
-    Open your browser and navigate to `http://localhost` (or your server's IP).
-    - Follow the on-screen wizard.
-    - Create your Admin Account.
-    - **Create your Organization** (This will be your main workspace).
-    - You will be automatically redirected to your new dashboard.
+> **Note:** Database migrations run automatically in the background on first boot. If you prefer to run them manually:
+> ```bash
+> docker-compose exec app php artisan migrate
+> ```
 
 ### Updating Existing Installations
 
-If you already have Orbit-Docs running and want to apply the latest fixes:
+For routine updates (code changes, bug fixes):
 
-1.  **Pull the Latest Code**
-    Navigate to your project directory:
-    ```bash
-    cd orbit-docs
-    git pull origin master
-    ```
+```bash
+git pull origin master
+docker-compose up -d --build
+```
 
-2.  **Rebuild Containers**
-    This is critical to apply fixes to the views and controller logic:
-    ```bash
-    docker-compose up -d --build
-    ```
+Code changes from the new image are automatically synced to the running volume on startup. Pending migrations are applied in the background automatically. **No manual cache clearing or migration commands needed.**
 
-3.  **Run Migrations**
-    Update your database schema (adds support for document status, tags, etc.):
-    ```bash
-    docker-compose exec app php artisan migrate
-    ```
-
-4.  **Clear Caches**
-    Ensure the latest configuration and views are loaded:
-    ```bash
-    docker-compose exec app php artisan config:clear
-    docker-compose exec app php artisan view:clear
-    ```
+> **First-time update from a version before v1.1?** Run this instead to clear old volumes:
+> ```bash
+> git pull origin master
+> docker-compose down -v
+> docker-compose up -d --build
+> ```
+> ⚠️ `down -v` removes ALL data volumes. Only use this on a fresh install or if you don't mind losing existing data.
 
 ## Troubleshooting
 
+**App shows "Starting Up" page for a long time**
+This is normal on first boot — the database container takes 30-60 seconds to initialise, then migrations run. The page auto-refreshes every 8 seconds. If it persists beyond 5 minutes:
+```bash
+docker logs orbitdocs-app -f   # look for [OrbitDocs] messages
+docker ps                       # check all containers are healthy
+```
+
+**After `docker-compose up --build`, the site still shows old content**
+You are likely on a pre-v1.1 version of OrbitDocs. The old entrypoint only seeded the volume once and never applied updates. Upgrade by clearing volumes:
+```bash
+git pull origin master
+docker-compose down -v
+docker-compose up -d --build
+```
+> ⚠️ `down -v` removes data volumes. Back up your data first if needed.
+
 **Installer Timeout / "Server Error (Likely Timeout)"**
-This error occurs when the migration process takes longer than the default timeout.
-*   **Fix:** We have added a custom `docker/php/local.ini` and increased Nginx timeouts.
-*   **Update Required:** You **MUST** rebuild your containers for this change to take effect:
-    ```bash
-    git pull origin master
-    docker-compose up -d --build
-    ```
-*   **Manual Bypass:** If you still face issues, run migrations via CLI:
-    1.  `docker-compose exec app php artisan migrate:fresh --seed`
-    2.  `docker-compose exec app touch storage/app/installed`
-    3.  Refresh the page.
+If the installer times out during migrations, you can run them manually:
+```bash
+docker-compose exec app php artisan migrate:fresh --seed
+```
+Then refresh the installer page.
 
 **Default Login Credentials (If Seeder Used)**
 *   **Email:** `admin@orbitdocs.com`
