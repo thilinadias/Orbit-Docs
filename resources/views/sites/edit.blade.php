@@ -50,6 +50,48 @@
                 </label>
             </div>
 
+            {{-- Location Details --}}
+            <div class="mt-6 mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Location Details</h4>
+                <div class="grid gap-6 mb-4 md:grid-cols-2">
+                    <label class="block text-sm">
+                        <span class="text-gray-700 dark:text-gray-400">Site Manager</span>
+                        <input name="site_manager" value="{{ $site->site_manager }}" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" />
+                    </label>
+
+                    <label class="block text-sm">
+                        <span class="text-gray-700 dark:text-gray-400">Timezone</span>
+                        <input name="timezone" value="{{ $site->timezone }}" placeholder="e.g. Asia/Colombo" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" />
+                    </label>
+                </div>
+            </div>
+
+            {{-- Network & Access --}}
+            <div class="mb-4">
+                <h4 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 border-b border-gray-200 dark:border-gray-700 pb-2">Network & Access</h4>
+                <div class="grid gap-6 mb-4 md:grid-cols-2">
+                    <label class="block text-sm">
+                        <span class="text-gray-700 dark:text-gray-400">Internet Provider</span>
+                        <input name="internet_provider" value="{{ $site->internet_provider }}" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" />
+                    </label>
+
+                    <label class="block text-sm">
+                        <span class="text-gray-700 dark:text-gray-400">Circuit ID</span>
+                        <input name="circuit_id" value="{{ $site->circuit_id }}" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" />
+                    </label>
+
+                    <label class="block text-sm">
+                        <span class="text-gray-700 dark:text-gray-400">Alarm Code</span>
+                        <input name="alarm_code" value="{{ $site->alarm_code }}" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" />
+                    </label>
+
+                    <label class="block text-sm">
+                        <span class="text-gray-700 dark:text-gray-400">After Hours Access</span>
+                        <input name="after_hours_access" value="{{ $site->after_hours_access }}" class="block w-full mt-1 text-sm dark:border-gray-600 dark:bg-gray-700 focus:border-purple-400 focus:outline-none focus:shadow-outline-purple dark:text-gray-300 dark:focus:shadow-outline-gray form-input" />
+                    </label>
+                </div>
+            </div>
+
             <div class="mb-4">
                 <label class="block text-sm">
                     <span class="text-gray-700 dark:text-gray-400">Notes</span>

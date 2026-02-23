@@ -32,6 +32,12 @@ class SiteController extends Controller
             'postcode' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
             'logo' => 'nullable|image|max:2048',
+            'site_manager' => 'nullable|string|max:255',
+            'internet_provider' => 'nullable|string|max:255',
+            'circuit_id' => 'nullable|string|max:255',
+            'alarm_code' => 'nullable|string|max:255',
+            'after_hours_access' => 'nullable|string',
+            'timezone' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('logo')) {
@@ -46,9 +52,9 @@ class SiteController extends Controller
     public function edit(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
+
         // Ensure site belongs to organization
-        if($site->organization_id !== $currentOrganization->id) {
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 
@@ -58,8 +64,8 @@ class SiteController extends Controller
     public function show(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
-        if($site->organization_id !== $currentOrganization->id) {
+
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 
@@ -70,20 +76,20 @@ class SiteController extends Controller
             'site' => $site,
             'assets' => $site->assets()->with('type')->latest()->get(),
             'recent_activity' => $currentOrganization->activityLogs()
-                ->where('subject_type', Site::class)
-                ->where('subject_id', $site->id)
-                ->with('user')
-                ->latest()
-                ->take(5)
-                ->get(),
+            ->where('subject_type', Site::class)
+            ->where('subject_id', $site->id)
+            ->with('user')
+            ->latest()
+            ->take(5)
+            ->get(),
         ]);
     }
 
     public function update(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
-        if($site->organization_id !== $currentOrganization->id) {
+
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 
@@ -95,11 +101,18 @@ class SiteController extends Controller
             'postcode' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
             'logo' => 'nullable|image|max:2048',
+            'site_manager' => 'nullable|string|max:255',
+            'internet_provider' => 'nullable|string|max:255',
+            'circuit_id' => 'nullable|string|max:255',
+            'alarm_code' => 'nullable|string|max:255',
+            'after_hours_access' => 'nullable|string',
+            'timezone' => 'nullable|string|max:100',
         ]);
 
         if ($request->hasFile('logo')) {
             $validated['logo'] = $request->file('logo')->store('sites', 'public');
-        } else {
+        }
+        else {
             unset($validated['logo']);
         }
 
@@ -111,8 +124,8 @@ class SiteController extends Controller
     public function destroy(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
-        if($site->organization_id !== $currentOrganization->id) {
+
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 
@@ -124,8 +137,8 @@ class SiteController extends Controller
     public function updateNotes(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
-        if($site->organization_id !== $currentOrganization->id) {
+
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 
@@ -139,8 +152,8 @@ class SiteController extends Controller
     public function suspend(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
-        if($site->organization_id !== $currentOrganization->id) {
+
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 
@@ -152,8 +165,8 @@ class SiteController extends Controller
     public function activate(Request $request, $organization, Site $site)
     {
         $currentOrganization = $request->attributes->get('current_organization');
-        
-        if($site->organization_id !== $currentOrganization->id) {
+
+        if ($site->organization_id !== $currentOrganization->id) {
             abort(404);
         }
 

@@ -21,6 +21,12 @@ class Site extends Model
         'notes',
         'logo',
         'status',
+        'site_manager',
+        'internet_provider',
+        'circuit_id',
+        'alarm_code',
+        'after_hours_access',
+        'timezone',
     ];
 
     public function organization()
@@ -34,7 +40,7 @@ class Site extends Model
     }
     public function favorites()
     {
-        return $this->morphMany(Favorite::class, 'favoritable');
+        return $this->morphMany(Favorite::class , 'favoritable');
     }
 
     public function isSuspended()
