@@ -303,8 +303,8 @@
             x-transition:leave-start="opacity-100 scale-100" 
             x-transition:leave-end="opacity-0 scale-95" 
             class="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 sm:px-6 mt-16"
-            @keydown.window.prevent.slash="openSearch"
-            @keydown.window.prevent.ctrl.k="openSearch"
+            @keydown.window.slash="if (['INPUT','TEXTAREA','SELECT'].includes($event.target.tagName) || $event.target.isContentEditable) return; $event.preventDefault(); openSearch()"
+            @keydown.window.ctrl.k.prevent="openSearch"
             @keydown.window.escape="closeSearch"
             x-cloak
         >
