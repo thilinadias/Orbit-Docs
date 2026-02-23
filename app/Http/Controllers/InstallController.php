@@ -11,6 +11,16 @@ use App\Models\Role;
 
 class InstallController extends Controller
 {
+    /**
+     * Path to the migration status file used for async polling.
+     * The web request starts artisan in the background and returns immediately;
+     * the frontend polls migrationStatus() until this file says "done" or "error".
+     */
+    private function statusFile(): string
+    {
+        return storage_path('app/migration_status.json');
+    }
+
     public function welcome()
     {
         $requirements = [
@@ -66,7 +76,7 @@ class InstallController extends Controller
             DB::reconnect('mysql');
             DB::connection()->getPdo();
         } catch (\Throwable $e) {
-            return back()->with('error', 'Cannot connect to database: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Cannot connect: ' . $e->getMessage())->withInput();
         }
 
         return redirect()->route('install.migrations');
@@ -78,52 +88,85 @@ class InstallController extends Controller
     }
 
     /**
-     * Run a fresh database setup via artisan CLI sub-processes.
+     * Start a background migration process and return IMMEDIATELY.
      *
-     * WHY WE USE exec() INSTEAD OF Artisan::call():
-     *   Artisan::call() runs inside the PHP-FPM web request process. When
-     *   migrate:fresh runs, it can trigger memory pressure, call exit(), or
-     *   encounter Error-level throwables that bypass our try/catch and cause
-     *   PHP to return a generic HTML 500 before we can send a JSON response.
+     * WHY ASYNC?
+     *   Nginx has a fastcgi_read_timeout (often 60s). If the PHP-FPM worker
+     *   takes longer than that (migrate:fresh on 35+ tables can take 90-120s),
+     *   Nginx returns 504 Gateway Timeout to the browser BEFORE PHP finishes.
+     *   No amount of set_time_limit() in PHP helps because the timeout is in
+     *   the Nginx->PHP-FPM connection layer.
      *
-     *   exec() spawns a completely separate CLI process, so:
-     *   - The web request stays alive regardless of what artisan does.
-     *   - We capture actual stdout/stderr for debugging if it fails.
-     *   - The exit code tells us definitively whether it succeeded.
+     *   By spawning artisan as a background process and returning immediately,
+     *   the web request completes in <1 second. The frontend polls
+     *   migrationStatus() every 2 seconds to check progress.
      */
     public function runMigrations()
     {
-        set_time_limit(0);
-        ini_set('max_execution_time', '0');
-        ignore_user_abort(true);
+        // Write initial status
+        file_put_contents($this->statusFile(), json_encode([
+            'status'  => 'running',
+            'step'    => 'Starting database setup...',
+            'started' => date('c'),
+        ]));
 
-        // Use the PHP CLI binary (not the FPM binary) for artisan commands.
-        // /usr/local/bin/php is the standard path in official PHP Docker images.
-        $php     = file_exists('/usr/local/bin/php') ? '/usr/local/bin/php' : PHP_BINARY;
-        $artisan = '/var/www/artisan';
+        // Build the background command.
+        // This script runs migrate:fresh, then db:seed, writing status after each.
+        $php     = '/usr/local/bin/php';
+        $artisan = base_path('artisan');
+        $sf      = $this->statusFile();
 
-        // Step 1: Wipe and re-run all migrations from scratch.
-        exec("$php $artisan migrate:fresh --force --no-interaction 2>&1", $out1, $code1);
-        if ($code1 !== 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'migrate:fresh failed (exit ' . $code1 . '): ' . implode("\n", $out1),
-            ], 500);
-        }
+        // Shell script that runs migrate:fresh, checks result, runs seed, writes status
+        $script = <<<BASH
+{$php} {$artisan} migrate:fresh --force --no-interaction > /tmp/migrate_output.txt 2>&1
+MIGRATE_EXIT=\$?
+if [ \$MIGRATE_EXIT -ne 0 ]; then
+    OUTPUT=\$(cat /tmp/migrate_output.txt)
+    echo '{"status":"error","step":"migrate:fresh failed","message":"'\$(echo \$OUTPUT | tr '"' "'" | tr '\n' ' ')'"}'  > {$sf}
+    exit 1
+fi
+{$php} {$artisan} db:seed --force --no-interaction > /tmp/seed_output.txt 2>&1
+SEED_EXIT=\$?
+if [ \$SEED_EXIT -ne 0 ]; then
+    OUTPUT=\$(cat /tmp/seed_output.txt)
+    echo '{"status":"error","step":"db:seed failed","message":"'\$(echo \$OUTPUT | tr '"' "'" | tr '\n' ' ')'"}'  > {$sf}
+    exit 1
+fi
+echo '{"status":"done","step":"Complete"}' > {$sf}
+BASH;
 
-        // Step 2: Seed roles, permissions, and reference data.
-        exec("$php $artisan db:seed --force --no-interaction 2>&1", $out2, $code2);
-        if ($code2 !== 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'db:seed failed (exit ' . $code2 . '): ' . implode("\n", $out2),
-            ], 500);
-        }
+        // Launch in background (nohup + &), completely detached from this process
+        $escaped = base64_encode($script);
+        exec("echo '{$escaped}' | base64 -d | nohup bash > /tmp/migration_runner.log 2>&1 &");
 
         return response()->json([
             'success' => true,
-            'message' => 'Database setup completed successfully.',
-        ])->header('X-Accel-Buffering', 'no');
+            'message' => 'Migration started in background. Polling for status...',
+        ]);
+    }
+
+    /**
+     * Poll endpoint — frontend calls this every 2 seconds.
+     */
+    public function migrationStatus()
+    {
+        $file = $this->statusFile();
+
+        if (!file_exists($file)) {
+            return response()->json([
+                'status'  => 'not_started',
+                'step'    => 'Waiting to start...',
+                'message' => null,
+            ]);
+        }
+
+        $data = json_decode(file_get_contents($file), true) ?? [
+            'status'  => 'error',
+            'step'    => 'Could not read status file',
+            'message' => 'Corrupted status file',
+        ];
+
+        return response()->json($data);
     }
 
     public function admin()
@@ -200,9 +243,8 @@ class InstallController extends Controller
             }
         }
 
-        // Mark install complete. The entrypoint checks this file on restart
-        // to decide whether to run incremental migrations (update path).
         file_put_contents(storage_path('app/installed'), 'INSTALLED ON ' . now());
+        @unlink($this->statusFile());
 
         Artisan::call('config:clear');
         Artisan::call('cache:clear');

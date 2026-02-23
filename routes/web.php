@@ -22,6 +22,7 @@ Route::prefix('install')->name('install.')->group(function () {
     Route::post('/database', [InstallController::class , 'storeDatabase'])->name('storeDatabase');
     Route::get('/migrations', [InstallController::class , 'migrations'])->name('migrations');
     Route::post('/migrations/run', [InstallController::class , 'runMigrations'])->name('runMigrations');
+    Route::get('/migrations/status', [InstallController::class , 'migrationStatus'])->name('migrationStatus');
     Route::get('/admin', [InstallController::class , 'admin'])->name('admin');
     Route::post('/admin', [InstallController::class , 'storeAdmin'])->name('storeAdmin');
     Route::get('/organization', [InstallController::class , 'organization'])->name('organization');
@@ -81,7 +82,8 @@ Route::middleware(['auth', 'verified', 'organization'])->group(function () {
             Route::post('/relationships', [App\Http\Controllers\RelationshipController::class , 'store'])->name('relationships.store');
             Route::delete('/relationships/{relationship}', [App\Http\Controllers\RelationshipController::class , 'destroy'])->name('relationships.destroy');
         }
-        );    });
+        );
+    });
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class , 'edit'])->name('profile.edit');
