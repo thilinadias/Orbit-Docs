@@ -103,6 +103,20 @@ class InstallController extends Controller
      */
     public function runMigrations()
     {
+        // Guard: prevent duplicate background processes on page refresh
+        if (file_exists($this->statusFile())) {
+            $existing = json_decode(file_get_contents($this->statusFile()), true);
+            if (($existing['status'] ?? '') === 'running') {
+                $started = strtotime($existing['started'] ?? '');
+                if ($started && (time() - $started) < 600) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Migration already in progress. Polling for status...',
+                    ]);
+                }
+            }
+        }
+
         // Write initial status
         file_put_contents($this->statusFile(), json_encode([
             'status'  => 'running',
