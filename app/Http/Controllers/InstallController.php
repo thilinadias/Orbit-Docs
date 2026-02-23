@@ -13,23 +13,20 @@ class InstallController extends Controller
 {
     public function welcome()
     {
-        // specific check for requirements
         $requirements = [
-            'PHP Version >= 8.1' => version_compare(phpversion(), '8.1.0', '>='),
-            'BCMath Extension' => extension_loaded('bcmath'),
-            'Ctype Extension' => extension_loaded('ctype'),
-            'JSON Extension' => extension_loaded('json'),
-            'Mbstring Extension' => extension_loaded('mbstring'),
-            'OpenSSL Extension' => extension_loaded('openssl'),
-            'PDO Extension' => extension_loaded('pdo'),
-            'Tokenizer Extension' => extension_loaded('tokenizer'),
-            'XML Extension' => extension_loaded('xml'),
-            'Writable Storage' => is_writable(storage_path()),
+            'PHP Version >= 8.1'       => version_compare(phpversion(), '8.1.0', '>='),
+            'BCMath Extension'         => extension_loaded('bcmath'),
+            'Ctype Extension'          => extension_loaded('ctype'),
+            'JSON Extension'           => extension_loaded('json'),
+            'Mbstring Extension'       => extension_loaded('mbstring'),
+            'OpenSSL Extension'        => extension_loaded('openssl'),
+            'PDO Extension'            => extension_loaded('pdo'),
+            'Tokenizer Extension'      => extension_loaded('tokenizer'),
+            'XML Extension'            => extension_loaded('xml'),
+            'Writable Storage'         => is_writable(storage_path()),
             'Writable Bootstrap Cache' => is_writable(base_path('bootstrap/cache')),
         ];
-
         $allMet = !in_array(false, $requirements);
-
         return view('install.welcome', compact('requirements', 'allMet'));
     }
 
@@ -40,46 +37,36 @@ class InstallController extends Controller
 
     public function storeDatabase(Request $request)
     {
-        // Logic to update .env and test connection
-        // For simplicity in this first pass, we might just validate inputs
-        // In a real Docker env, we might be writing to a mounted .env or setting env vars.
-        // Since we mount .env, we can overwrite it.
-
         $request->validate([
-            'db_host' => 'required',
-            'db_port' => 'required',
+            'db_host'     => 'required',
+            'db_port'     => 'required',
             'db_database' => 'required',
             'db_username' => 'required',
-            'db_password' => 'nullable', // Password can be empty
+            'db_password' => 'nullable',
         ]);
 
         $this->updateEnvironmentFile([
-            'DB_HOST' => $request->db_host,
-            'DB_PORT' => $request->db_port,
+            'DB_HOST'     => $request->db_host,
+            'DB_PORT'     => $request->db_port,
             'DB_DATABASE' => $request->db_database,
             'DB_USERNAME' => $request->db_username,
             'DB_PASSWORD' => $request->db_password,
         ]);
 
-        // Clear config cache to ensure new values are used
         Artisan::call('config:clear');
 
-        // Test connection
         try {
-            // We force a new connection because the config is already loaded into memory
-            // Setting config at runtime for testing
             config([
-                'database.connections.mysql.host' => $request->db_host,
-                'database.connections.mysql.port' => $request->db_port,
+                'database.connections.mysql.host'     => $request->db_host,
+                'database.connections.mysql.port'     => $request->db_port,
                 'database.connections.mysql.database' => $request->db_database,
                 'database.connections.mysql.username' => $request->db_username,
                 'database.connections.mysql.password' => $request->db_password,
             ]);
             DB::reconnect('mysql');
             DB::connection()->getPdo();
-        }
-        catch (\Exception $e) {
-            return back()->with('error', 'Could not connect to database: ' . $e->getMessage())->withInput();
+        } catch (\Exception $e) {
+            return back()->with('error', 'Cannot connect to database: ' . $e->getMessage())->withInput();
         }
 
         return redirect()->route('install.migrations');
@@ -93,34 +80,23 @@ class InstallController extends Controller
     public function runMigrations()
     {
         set_time_limit(0);
-        ini_set('max_execution_time', 0);
+        ini_set('max_execution_time', '0');
         ignore_user_abort(true);
 
         try {
             \Illuminate\Support\Facades\Auth::logout();
             \Illuminate\Support\Facades\Session::flush();
 
-            // Always wipe the database completely before running migrations.
-            // This handles the common case where a previous failed install left
-            // the DB in an inconsistent state (tables exist but migrations table
-            // is missing entries), which causes "Duplicate column" errors.
-            DB::statement('SET FOREIGN_KEY_CHECKS=0');
-            foreach (DB::select('SHOW TABLES') as $row) {
-                $t = array_values((array) $row)[0];
-                DB::statement("DROP TABLE IF EXISTS `{$t}`");
-            }
-            DB::statement('SET FOREIGN_KEY_CHECKS=1');
-
-            Artisan::call('migrate', ['--force' => true]);
-            Artisan::call('db:seed',  ['--force' => true]);
+            Artisan::call('migrate:fresh', ['--force' => true]);
+            Artisan::call('db:seed', ['--force' => true]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Setup completed successfully.',
+                'message' => 'Database setup completed successfully.',
             ])->header('X-Accel-Buffering', 'no');
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => ->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -132,23 +108,18 @@ class InstallController extends Controller
     public function storeAdmin(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|confirmed|min:8',
         ]);
 
-        // Create Admin
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'is_super_admin' => true,
+        User::create([
+            'name'              => $request->name,
+            'email'             => $request->email,
+            'password'          => Hash::make($request->password),
+            'is_super_admin'    => true,
             'email_verified_at' => now(),
         ]);
-
-        // Assign Role if roles are seeded?
-        // Assuming RolesPermissionsSeeder didn't assign super admin to a specific user initially, or we attach 'Super Admin' role.
-        // But is_super_admin column handles it mostly.
 
         return redirect()->route('install.organization');
     }
@@ -165,26 +136,14 @@ class InstallController extends Controller
             'slug' => 'required|string|max:255|unique:organizations,slug',
         ]);
 
-        // Create Organization
         $organization = \App\Models\Organization::create([
             'name' => $request->name,
-            'slug' => \Illuminate\Support\Str::slug($request->slug), // Ensure slug format
+            'slug' => \Illuminate\Support\Str::slug($request->slug),
         ]);
 
-        // Attach Super Admin (assuming the user created in storeAdmin is logged in or we take the latest user? 
-        // Installing usually happens in one session. 
-        // Wait, storeAdmin creates a user but doesnt login? 
-        // Actually, usually installer doesn't login until the end. 
-        // We need to attach the *just created* user. 
-        // Since we are not maintaining state easily, let's assume the ONLY user is the admin we just created, or we can login the user.
-        // Better: Login the user in storeAdmin? Or find the user.
-        // Let's find the user. effectively the first user.
         $user = User::first();
         if ($user) {
-            // Fetch Admin Role
             $adminRole = Role::where('name', 'Admin')->first();
-
-            // Attach user to organization with 'admin' role_id
             $user->organizations()->attach($organization->id, ['role_id' => $adminRole?->id]);
         }
 
@@ -198,68 +157,45 @@ class InstallController extends Controller
 
     public function finish(Request $request)
     {
-        // Handle Network/SSL Configuration
         if ($request->network_type === 'domain' && $request->hasFile('ssl_cert') && $request->hasFile('ssl_key')) {
-            // Validate files
             $request->validate([
-                'domain' => 'required|string',
+                'domain'   => 'required|string',
                 'ssl_cert' => 'required|file',
-                'ssl_key' => 'required|file',
+                'ssl_key'  => 'required|file',
             ]);
-
-            // Define paths in the shared volume
-            $sslPath = '/etc/nginx/ssl'; // This is where we mapped orbitdocs_ssl in docker-compose for App container
-
-            // Ensure directory exists (it should via docker volume, but good to check)
-            if (!file_exists($sslPath)) {
-                mkdir($sslPath, 0755, true);
-            }
-
-            // Save files
+            $sslPath = '/etc/nginx/ssl';
+            if (!file_exists($sslPath)) { mkdir($sslPath, 0755, true); }
             $request->file('ssl_cert')->move($sslPath, 'orbitdocs.crt');
             $request->file('ssl_key')->move($sslPath, 'orbitdocs.key');
-
-            // Update APP_URL in .env
             $this->updateEnvironmentFile(['APP_URL' => 'https://' . $request->domain]);
-
-        // NOTE: We cannot easily restart Nginx from here. 
-        // The user will see a "Restart Required" message or instructions in the dashboard if we want.
-        // But for now, we just save the files. 
-        }
-        else {
-            // Update APP_URL in .env to IP if that's what we have (or just keep as is)
-            $currentIp = $request->getHost();
+        } else {
             if ($request->network_type === 'ip') {
-                $this->updateEnvironmentFile(['APP_URL' => 'http://' . $currentIp]);
+                $this->updateEnvironmentFile(['APP_URL' => 'http://' . $request->getHost()]);
             }
         }
 
-        // Finalize installation
+        // Mark installation complete. The entrypoint reads this file on container
+        // restart to know it should run incremental migrations (update path).
         file_put_contents(storage_path('app/installed'), 'INSTALLED ON ' . now());
 
-        // Clear caches
         Artisan::call('config:clear');
         Artisan::call('cache:clear');
 
-        return redirect()->route('login')->with('status', 'Installation Completed! Please log in with your super admin credentials.');
+        return redirect()->route('login')->with('status', 'Installation complete! Please log in.');
     }
 
-    protected function updateEnvironmentFile($data)
+    protected function updateEnvironmentFile(array $data): void
     {
         $path = base_path('.env');
-        if (file_exists($path)) {
-            $currentEnv = file_get_contents($path);
-            foreach ($data as $key => $value) {
-                // Check if key exists
-                if (preg_match("/^{$key}=/", $currentEnv)) {
-                    $currentEnv = preg_replace("/^{$key}=.*/", "{$key}=\"{$value}\"", $currentEnv);
-                }
-                else {
-                    // Append if not exists
-                    $currentEnv .= "\n{$key}=\"{$value}\"";
-                }
+        if (!file_exists($path)) { return; }
+        $env = file_get_contents($path);
+        foreach ($data as $key => $value) {
+            if (preg_match("/^{$key}=/m", $env)) {
+                $env = preg_replace("/^{$key}=.*/m", "{$key}={$value}", $env);
+            } else {
+                $env .= "\n{$key}={$value}";
             }
-            file_put_contents($path, $currentEnv);
         }
+        file_put_contents($path, $env);
     }
 }
