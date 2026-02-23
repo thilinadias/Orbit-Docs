@@ -65,7 +65,7 @@ class InstallController extends Controller
             ]);
             DB::reconnect('mysql');
             DB::connection()->getPdo();
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return back()->with('error', 'Cannot connect to database: ' . $e->getMessage())->withInput();
         }
 
@@ -77,27 +77,53 @@ class InstallController extends Controller
         return view('install.migrations');
     }
 
+    /**
+     * Run a fresh database setup via artisan CLI sub-processes.
+     *
+     * WHY WE USE exec() INSTEAD OF Artisan::call():
+     *   Artisan::call() runs inside the PHP-FPM web request process. When
+     *   migrate:fresh runs, it can trigger memory pressure, call exit(), or
+     *   encounter Error-level throwables that bypass our try/catch and cause
+     *   PHP to return a generic HTML 500 before we can send a JSON response.
+     *
+     *   exec() spawns a completely separate CLI process, so:
+     *   - The web request stays alive regardless of what artisan does.
+     *   - We capture actual stdout/stderr for debugging if it fails.
+     *   - The exit code tells us definitively whether it succeeded.
+     */
     public function runMigrations()
     {
         set_time_limit(0);
         ini_set('max_execution_time', '0');
         ignore_user_abort(true);
 
-        try {
-            \Illuminate\Support\Facades\Auth::logout();
-            \Illuminate\Support\Facades\Session::flush();
+        // Use the PHP CLI binary (not the FPM binary) for artisan commands.
+        // /usr/local/bin/php is the standard path in official PHP Docker images.
+        $php     = file_exists('/usr/local/bin/php') ? '/usr/local/bin/php' : PHP_BINARY;
+        $artisan = '/var/www/artisan';
 
-            Artisan::call('migrate:fresh', ['--force' => true]);
-            Artisan::call('db:seed', ['--force' => true]);
-
+        // Step 1: Wipe and re-run all migrations from scratch.
+        exec("$php $artisan migrate:fresh --force --no-interaction 2>&1", $out1, $code1);
+        if ($code1 !== 0) {
             return response()->json([
-                'success' => true,
-                'message' => 'Database setup completed successfully.',
-            ])->header('X-Accel-Buffering', 'no');
-
-        } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                'success' => false,
+                'message' => 'migrate:fresh failed (exit ' . $code1 . '): ' . implode("\n", $out1),
+            ], 500);
         }
+
+        // Step 2: Seed roles, permissions, and reference data.
+        exec("$php $artisan db:seed --force --no-interaction 2>&1", $out2, $code2);
+        if ($code2 !== 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'db:seed failed (exit ' . $code2 . '): ' . implode("\n", $out2),
+            ], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Database setup completed successfully.',
+        ])->header('X-Accel-Buffering', 'no');
     }
 
     public function admin()
@@ -174,8 +200,8 @@ class InstallController extends Controller
             }
         }
 
-        // Mark installation complete. The entrypoint reads this file on container
-        // restart to know it should run incremental migrations (update path).
+        // Mark install complete. The entrypoint checks this file on restart
+        // to decide whether to run incremental migrations (update path).
         file_put_contents(storage_path('app/installed'), 'INSTALLED ON ' . now());
 
         Artisan::call('config:clear');
