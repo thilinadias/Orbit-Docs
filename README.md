@@ -16,6 +16,18 @@
 
 ## Recent Updates (February 2026)
 
+### Installer Reliability Overhaul (v1.2 — Feb 23 2026)
+
+Complete redesign of the installation process to eliminate timeout errors:
+
+- **Async Migrations:** Database setup now runs as a **background process** inside the container. The web request returns instantly and the browser polls for status every 3 seconds. This eliminates all Nginx gateway timeouts (504 errors) regardless of how long migrations take.
+- **Fresh vs Update Split:** The Docker entrypoint now distinguishes between fresh installs and updates:
+  - **Fresh install** — entrypoint skips migrations; the installer wizard owns the entire setup.
+  - **Existing install** — entrypoint runs incremental `migrate --force` in the background on every restart.
+  - Detection uses a `storage/app/installed` marker file written by the installer on completion.
+- **Better Error Reporting:** The installer now shows the **exact PHP error message** from failed migrations in a detail box, instead of a generic "Server Error" message.
+- **Idempotent Seeder:** `DatabaseSeeder` uses `firstOrCreate` for asset types, making retries safe.
+
 ### Production Deployment Fixes (v1.1 — Feb 22 2026)
 
 A comprehensive overhaul of the Docker deployment pipeline to make production deployments reliable:
@@ -25,7 +37,7 @@ A comprehensive overhaul of the Docker deployment pipeline to make production de
 - **Security — Debug Files Removed:** Development helper scripts (`debug_roles.php`, `fix_cred_perm.php`, `force_suspend.php`, etc.) have been removed from the repository. They were being baked into the production Docker image.
 - **Startup UX:** A branded maintenance page now shows instead of a raw browser 502 error while the app initialises. It auto-refreshes every 8 seconds.
 - **Dockerfile:** Removed unnecessary `nginx` from the php-fpm container (~50MB saved). Added `rsync`.
-- **PHP Config:** Fixed Windows CRLF line endings in `local.ini` that caused PHP to misread config values. `max_execution_time` now correctly set to `300s` for all requests (the installer sets `0` itself for migrations).
+- **PHP Config:** Fixed Windows CRLF line endings in `local.ini` that caused PHP to misread config values. `max_execution_time` now correctly set to `300s` for all requests.
 - **Environment:** `.env.example` updated with production-safe defaults (`APP_ENV=production`, `APP_DEBUG=false`, correct Docker service names pre-set).
 - **Volumes:** Replaced host bind-mount for `storage/logs` with a named Docker volume to prevent root-ownership issues on fresh servers.
 
@@ -63,20 +75,25 @@ OrbitDocs is designed to be installed easily using Docker. This method includes 
     ```
     The containers will start. The app automatically:
     - Waits for MySQL to become healthy before starting
-    - Runs any pending database migrations in the background
+    - Sets up the `.env` file with Docker service names
+    - Generates `APP_KEY` if not already set
     - Shows a branded loading page while initialising (instead of a 502 error)
 
-3.  **Access the Installer**
-    Open your browser and navigate to `http://<your-server-ip>`.
-    - Follow the on-screen wizard
-    - Create your Admin Account
-    - Create your first Organization (your main workspace)
-    - You will be automatically redirected to your new dashboard
+    > On a **fresh install**, the entrypoint skips database migrations — the installer wizard handles that.
 
-> **Note:** Database migrations run automatically in the background on first boot. If you prefer to run them manually:
-> ```bash
-> docker-compose exec app php artisan migrate
-> ```
+3.  **Access the Setup Wizard**
+    Open your browser and navigate to `http://<your-server-ip>`. The wizard walks you through 6 steps:
+
+    | Step | What It Does |
+    |---|---|
+    | 1. **Welcome** | Checks PHP extensions and directory permissions |
+    | 2. **Database** | Verifies your MySQL connection (pre-filled for Docker) |
+    | 3. **System Setup** | Runs `migrate:fresh` + `db:seed` in the background — progress is polled live |
+    | 4. **Admin Account** | Creates your super-admin user |
+    | 5. **Organization** | Creates your first workspace (client/department) |
+    | 6. **Network** | Choose IP or custom domain, optional SSL upload |
+
+    After step 6, you're redirected to the login page. Sign in with the admin credentials you just created.
 
 ### Updating Existing Installations
 
@@ -100,7 +117,7 @@ Code changes from the new image are automatically synced to the running volume o
 ## Troubleshooting
 
 **App shows "Starting Up" page for a long time**
-This is normal on first boot — the database container takes 30-60 seconds to initialise, then migrations run. The page auto-refreshes every 8 seconds. If it persists beyond 5 minutes:
+This is normal on first boot — the database container takes 30-60 seconds to initialise. The page auto-refreshes every 8 seconds. If it persists beyond 5 minutes:
 ```bash
 docker logs orbitdocs-app -f   # look for [OrbitDocs] messages
 docker ps                       # check all containers are healthy
@@ -115,12 +132,14 @@ docker-compose up -d --build
 ```
 > ⚠️ `down -v` removes data volumes. Back up your data first if needed.
 
-**Installer Timeout / "Server Error (Likely Timeout)"**
-If the installer times out during migrations, you can run them manually:
-```bash
-docker-compose exec app php artisan migrate:fresh --seed
-```
-Then refresh the installer page.
+**Installer System Setup shows an error**
+The installer's "System Setup" step runs migrations as a background process and polls for status. If it reports an error, the red error-detail box shows the **exact PHP error message**. Common fixes:
+- **"Duplicate column" or "Table already exists"**: A previous failed attempt left the DB in an inconsistent state. Click **Retry Setup** — the installer wipes the database cleanly before re-running migrations.
+- **If Retry still fails**, run migrations manually inside the container:
+  ```bash
+  docker-compose exec app php artisan migrate:fresh --seed --force
+  ```
+  Then navigate directly to `http://<your-server-ip>/install/admin` to continue the setup.
 
 **Default Login Credentials (If Seeder Used)**
 *   **Email:** `admin@orbitdocs.com`
