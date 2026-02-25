@@ -111,7 +111,7 @@ class DocumentController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
             'approval_status' => 'required|in:draft,review,published',
             'tags' => 'nullable|string',
             'category' => 'nullable|string|max:255',
@@ -120,13 +120,13 @@ class DocumentController extends Controller
 
         // Save version before update
         $document->versions()->create([
-            'content' => $document->content,
+            'content' => $document->content ?? '',
             'user_id' => auth()->id(),
         ]);
 
         $document->update([
             'title' => $validated['title'],
-            'content' => $validated['content'],
+            'content' => $validated['content'] ?? null,
             'approval_status' => $validated['approval_status'],
             'category' => $validated['category'] ?? null,
             'author' => $validated['author'] ?? null,
