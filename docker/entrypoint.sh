@@ -13,7 +13,6 @@ log "Syncing code from image to volume..."
 rsync -a --delete \
     --exclude='/.env' \
     --exclude='/storage/' \
-    --exclude='/bootstrap/cache/' \
     /var/www-image/ /var/www/
 
 # Ensure required runtime directories exist after rsync
