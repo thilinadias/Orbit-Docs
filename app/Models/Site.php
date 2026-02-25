@@ -38,6 +38,12 @@ class Site extends Model
     {
         return $this->hasMany(Asset::class);
     }
+
+    public function documents()
+    {
+        return $this->morphMany(Document::class , 'documentable');
+    }
+
     public function favorites()
     {
         return $this->morphMany(Favorite::class , 'favoritable');

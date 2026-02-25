@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration 
 {
@@ -61,6 +62,7 @@ return new class extends Migration
             $table->foreignId('organization_id')->constrained()->onDelete('cascade');
             $table->foreignId('role_id')->nullable()->constrained()->onDelete('set null');
             $table->boolean('is_primary')->default(false);
+            $table->json('permissions')->nullable();
             $table->timestamps();
             $table->unique(['user_id', 'organization_id']);
         });
@@ -208,7 +210,9 @@ return new class extends Migration
             $table->foreignId('last_modified_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
 
-            $table->fullText(['title', 'content']);
+            if (DB::getDriverName() === 'mysql') {
+                $table->fullText(['title', 'content']);
+            }
         });
 
         Schema::create('document_versions', function (Blueprint $table) {

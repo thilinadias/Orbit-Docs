@@ -18,13 +18,36 @@ class Document extends Model
         return $this->belongsTo(Organization::class);
     }
 
+    public function documentable()
+    {
+        return $this->morphTo();
+    }
+
     public function versions()
     {
         return $this->hasMany(DocumentVersion::class);
     }
-    
+
     public function tags()
     {
-        return $this->morphToMany(Tag::class, 'taggable');
+        return $this->morphToMany(Tag::class , 'taggable');
+    }
+
+    public function isImage()
+    {
+        return str_starts_with($this->mime_type, 'image/');
+    }
+
+    public function isPdf()
+    {
+        return $this->mime_type === 'application/pdf';
+    }
+
+    public function isWord()
+    {
+        return in_array($this->mime_type, [
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/msword'
+        ]);
     }
 }

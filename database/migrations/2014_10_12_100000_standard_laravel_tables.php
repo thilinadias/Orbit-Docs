@@ -29,6 +29,27 @@ return new class extends Migration
             $table->timestamp('failed_at')->useCurrent();
         });
 
+        // 3. Users
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
+            $table->boolean('is_super_admin')->default(false);
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('oauth_provider')->nullable();
+            $table->string('oauth_id')->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('password')->nullable();
+            $table->string('status')->default('active');
+            $table->boolean('mfa_enabled')->default(false);
+            $table->text('google2fa_secret')->nullable();
+            $table->boolean('is_2fa_enforced')->default(false);
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
+            $table->timestamp('last_login_at')->nullable();
+            $table->rememberToken();
+            $table->timestamps();
+            $table->softDeletes();
+        });
     }
 
     /**
@@ -36,6 +57,7 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('users');
         Schema::dropIfExists('failed_jobs');
         Schema::dropIfExists('password_reset_tokens');
     }
