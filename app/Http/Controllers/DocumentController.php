@@ -153,4 +153,19 @@ class DocumentController extends Controller
 
         return redirect()->route('documents.show', [$organization->slug, $document->id])->with('success', 'Document updated.');
     }
+
+    public function destroy(Request $request, $organization, Document $document)
+    {
+        $this->authorize('document.delete');
+        $organization = $request->attributes->get('current_organization');
+
+        // If it's an upload, delete the physical file
+        if ($document->is_upload && $document->file_path) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($document->file_path);
+        }
+
+        $document->delete();
+
+        return redirect()->route('documents.index', $organization->slug)->with('success', 'Document deleted successfully.');
+    }
 }

@@ -25,19 +25,20 @@ class CheckOrganizationAccess
         // If organization is passed as a model binding, getting the model.
         if ($organizationSlug instanceof Organization) {
             $organization = $organizationSlug;
-        } else {
-             $organization = Organization::where('slug', $organizationSlug)->firstOrFail();
+        }
+        else {
+            $organization = Organization::where('slug', $organizationSlug)->firstOrFail();
         }
 
         // Check if user belongs to this organization (or is Super Admin)
         $user = $request->user();
 
-        if ($user && ($user->organizations->contains($organization->id) || $user->hasRole('Super Admin'))) {
+        if ($user && ($user->organizations->contains($organization->id) || $user->hasRole('super-admin'))) {
             // Share current organization with views/controllers
             $request->attributes->set('current_organization', $organization);
             // Also share to views
             view()->share('currentOrganization', $organization);
-             
+
             return $next($request);
         }
 

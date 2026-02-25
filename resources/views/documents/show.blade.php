@@ -16,6 +16,15 @@
                 <a href="{{ route('documents.edit', [$currentOrganization->slug, $document->id]) }}" class="px-4 py-2 text-sm font-medium leading-5 text-white transition-colors duration-150 bg-purple-600 border border-transparent rounded-lg active:bg-purple-600 hover:bg-purple-700 focus:outline-none focus:shadow-outline-purple">
                     Edit
                 </a>
+                @can('document.delete')
+                    <form action="{{ route('documents.destroy', [$currentOrganization->slug, $document->id]) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this document? This action cannot be undone.');" class="inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-4 py-2 text-sm font-medium leading-5 text-red-600 bg-red-100 border border-transparent rounded-lg hover:bg-red-200 focus:outline-none">
+                            Delete
+                        </button>
+                    </form>
+                @endcan
             </div>
         </div>
     </x-slot>

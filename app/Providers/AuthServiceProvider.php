@@ -29,18 +29,18 @@ class AuthServiceProvider extends ServiceProvider
         });
 
         // 2. Define Dynamic Gates
-        if (!app()->runningInConsole() && \Illuminate\Support\Facades\Schema::hasTable('permissions')) {
-            // Cache permissions? For now, fetch all.
-            try {
-                $permissions = \App\Models\Permission::all();
-                foreach ($permissions as $permission) {
-                    \Illuminate\Support\Facades\Gate::define($permission->slug, function ($user) use ($permission) {
-                        return $user->hasPermission($permission->slug, request()->attributes->get('current_organization'));
-                    });
-                }
-            } catch (\Exception $e) {
-                // Ignore during migration handling if partial
+        // Instead of fetching all from DB at boot (which fails in tests),
+        // we use a dynamic check if the ability looks like our slug pattern.
+        \Illuminate\Support\Facades\Gate::after(function ($user, $ability, $result) {
+            if ($result === true)
+                return true;
+
+            // Check if ability matches our permission slug pattern (e.g., document.view)
+            if (str_contains($ability, '.')) {
+                return $user->hasPermission($ability, request()->attributes->get('current_organization'));
             }
-        }
+
+            return $result;
+        });
     }
 }
