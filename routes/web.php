@@ -20,6 +20,7 @@ Route::prefix('install')->name('install.')->group(function () {
     Route::get('/welcome', [InstallController::class , 'welcome'])->name('welcome');
     Route::get('/database', [InstallController::class , 'database'])->name('database');
     Route::post('/database', [InstallController::class , 'storeDatabase'])->name('storeDatabase');
+    Route::get('/status', [InstallController::class , 'status'])->name('status');
     Route::get('/migrations', [InstallController::class , 'migrations'])->name('migrations');
     Route::post('/migrations/run', [InstallController::class , 'runMigrations'])->name('runMigrations');
     Route::get('/migrations/status', [InstallController::class , 'migrationStatus'])->name('migrationStatus');
