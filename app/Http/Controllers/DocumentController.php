@@ -31,7 +31,7 @@ class DocumentController extends Controller
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'content' => 'nullable|string',
-            'file' => 'nullable|file|max:262144', // 256MB limit
+            'file' => 'nullable|file|max:524288', // 512MB limit
             'documentable_id' => 'nullable|integer',
             'documentable_type' => 'nullable|string',
         ]);

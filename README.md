@@ -12,6 +12,7 @@
 - **Credential Vault**: Securely store and share passwords with AES-256 encryption.
 - **Documentation**: Write and organize internal wikis using Markdown.
 - **Document Deletion**: Securely remove documentation and files (Admins only).
+- **Large File Support**: Support for document uploads up to **512MB**.
 - **Activity Logs**: Audit trail for all changes.
 - **Modern UI**: Clean, dark-mode compatible interface built with TailwindCSS and Alpine.js.
 
@@ -22,7 +23,8 @@
 Added secure document management and robust permission resolution:
 
 - **Document Deletion:** Securely remove documentation and associated physical files from storage. Restricted to Super Admins and Organization Admins.
-- **Dynamic Gate Resolution:** Refactored the internal authorization system to use a dynamic `Gate::after` hook. This ensures permissions are correctly resolved in all environments (including tests) and removes the database-dependency during boot.
+- **512MB Upload Support:** Resolved the `413 Request Entity Too Large` error by consolidating Nginx configurations and increasing limits to **512MB** across the entire stack.
+- **Dynamic Gate Resolution:** Refactored the internal authorization system to use a dynamic `Gate::after` hook.
 
 ### CI/CD Stabilization & Enhanced Security (v1.3 — Feb 25 2026)
 
