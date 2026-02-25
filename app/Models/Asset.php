@@ -13,7 +13,7 @@ use App\Traits\LogsActivity;
 class Asset extends Model
 {
     use HasFactory, InteractsWithRelationships, LogsActivity;
-    
+
     protected $fillable = [
         'organization_id',
         'asset_type_id',
@@ -36,7 +36,7 @@ class Asset extends Model
         'notes',
         'status',
     ];
-    
+
     protected $guarded = [];
 
     const STATUS_ACTIVE = 'active';
@@ -69,7 +69,7 @@ class Asset extends Model
 
     public function type()
     {
-        return $this->belongsTo(AssetType::class, 'asset_type_id');
+        return $this->belongsTo(AssetType::class , 'asset_type_id');
     }
 
     public function values()
@@ -77,8 +77,13 @@ class Asset extends Model
         return $this->hasMany(AssetValue::class);
     }
 
+    public function documents(): MorphMany
+    {
+        return $this->morphMany(Document::class , 'documentable');
+    }
+
     public function customFields()
     {
-        return $this->hasManyThrough(AssetCustomField::class, AssetType::class, 'id', 'asset_type_id', 'asset_type_id', 'id');
+        return $this->hasManyThrough(AssetCustomField::class , AssetType::class , 'id', 'asset_type_id', 'asset_type_id', 'id');
     }
 }

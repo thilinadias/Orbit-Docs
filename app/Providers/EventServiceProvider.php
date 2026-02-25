@@ -16,13 +16,16 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         Registered::class => [
-            SendEmailVerificationNotification::class,
+            SendEmailVerificationNotification::class ,
         ],
         \Illuminate\Auth\Events\Login::class => [
-            \App\Listeners\LogSuccessfulLogin::class,
+            \App\Listeners\LogSuccessfulLogin::class ,
         ],
         \Illuminate\Auth\Events\Logout::class => [
-            \App\Listeners\LogSuccessfulLogout::class,
+            \App\Listeners\LogSuccessfulLogout::class ,
+        ],
+        \SocialiteProviders\Manager\SocialiteWasCalled::class => [
+            \SocialiteProviders\Microsoft\MicrosoftExtendSocialite::class . '@handle',
         ],
     ];
 
@@ -31,7 +34,7 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+    //
     }
 
     /**
