@@ -70,6 +70,8 @@ Route::middleware(['auth', 'verified', 'organization'])->group(function () {
             Route::get('credentials/{credential}/reveal', [CredentialController::class , 'reveal'])->name('credentials.reveal');
 
             Route::resource('documents', DocumentController::class);
+            Route::get('documents/{document}/download', [DocumentController::class , 'download'])->name('documents.download');
+            Route::get('documents/{document}/preview', [DocumentController::class , 'preview'])->name('documents.preview');
 
             Route::resource('sites', SiteController::class);
             Route::patch('/sites/{site}/suspend', [SiteController::class , 'suspend'])->name('sites.suspend');
@@ -108,5 +110,13 @@ Route::middleware(['auth', 'verified', 'two-factor'])->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\DashboardController::class , 'global'])->name('dashboard.global');
     Route::get('/global-dashboard', [\App\Http\Controllers\DashboardController::class , 'global'])->name('global.dashboard');
 });
+
+// OAuth / SSO Routes (must be public — no auth middleware)
+Route::get('/auth/{provider}/redirect', [\App\Http\Controllers\Auth\SocialAuthController::class , 'redirect'])
+    ->name('social.redirect')
+    ->where('provider', 'google|microsoft');
+Route::get('/auth/{provider}/callback', [\App\Http\Controllers\Auth\SocialAuthController::class , 'callback'])
+    ->name('social.callback')
+    ->where('provider', 'google|microsoft');
 
 require __DIR__ . '/auth.php';

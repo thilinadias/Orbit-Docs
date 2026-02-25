@@ -43,7 +43,7 @@
             </button>
         </div>
 
-        <!-- Quick Note Section (Auto-hides if empty and not editing) -->
+        <!-- Quick Note Section -->
         <div x-show="hasNotes || editing" class="mb-8 p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800 border-t-4 border-yellow-400" x-cloak>
             <h4 class="mb-4 font-semibold text-gray-600 dark:text-gray-300 flex items-center justify-between">
                 <span class="flex items-center text-xs">
@@ -137,6 +137,49 @@
         </div>
     </div>
 
+    <!-- Site Documents -->
+    <div class="p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800 border-t-4 border-green-500 mb-8">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="font-semibold text-gray-600 dark:text-gray-300 flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Site Documents
+            </h4>
+            <a href="{{ route('documents.create', ['organization' => $currentOrganization->slug, 'documentable_id' => $site->id, 'documentable_type' => get_class($site)]) }}" class="text-xs px-2 py-1 bg-purple-600 text-white rounded hover:bg-purple-700">
+                + Add Document
+            </a>
+        </div>
+        <div class="w-full overflow-x-auto">
+            <table class="w-full whitespace-no-wrap">
+                <thead>
+                    <tr class="text-xs font-semibold tracking-wide text-left text-gray-500 uppercase border-b dark:border-gray-700 bg-gray-50 dark:text-gray-400 dark:bg-gray-800">
+                        <th class="px-4 py-3">Document</th>
+                        <th class="px-4 py-3">Type</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y dark:divide-gray-700 dark:bg-gray-800">
+                    @forelse ($site->documents as $doc)
+                    <tr class="text-gray-700 dark:text-gray-400">
+                        <td class="px-4 py-3 text-sm font-semibold">
+                            <a href="{{ route('documents.show', [$currentOrganization->slug, $doc->id]) }}" class="hover:text-purple-600">{{ $doc->title }}</a>
+                        </td>
+                        <td class="px-4 py-3 text-xs uppercase">
+                            {{ $doc->is_upload ? 'File (' . strtoupper(last(explode('/', $doc->mime_type))) . ')' : 'Markdown' }}
+                        </td>
+                        <td class="px-4 py-3 text-right text-xs">
+                            @if($doc->is_upload)
+                                <a href="{{ route('documents.download', [$currentOrganization->slug, $doc->id]) }}" class="text-blue-600 hover:underline">Download</a>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr><td colspan="3" class="px-4 py-3 text-xs text-gray-400 italic">No documents linked to this site.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <div class="grid gap-6 mb-8 lg:grid-cols-3">
         <!-- Site Assets -->
         <div class="lg:col-span-2 min-w-0 p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
@@ -210,5 +253,4 @@
             </div>
         </div>
     </div>
-    
 </x-app-layout>

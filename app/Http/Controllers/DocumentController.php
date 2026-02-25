@@ -30,10 +30,36 @@ class DocumentController extends Controller
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
-            'content' => 'required|string',
+            'content' => 'nullable|string',
+            'file' => 'nullable|file|max:102400', // 100MB limit
+            'documentable_id' => 'nullable|integer',
+            'documentable_type' => 'nullable|string',
         ]);
 
-        $document = $organization->documents()->create($validated);
+        $data = [
+            'title' => $validated['title'],
+            'content' => $validated['content'] ?? null,
+            'documentable_id' => $validated['documentable_id'] ?? null,
+            'documentable_type' => $validated['documentable_type'] ?? null,
+        ];
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $path = $file->store('documents', 'public');
+
+            $data['is_upload'] = true;
+            $data['file_path'] = $path;
+            $data['file_name'] = $file->getClientOriginalName();
+            $data['mime_type'] = $file->getClientMimeType();
+            $data['file_size'] = $file->getSize();
+        }
+
+        $document = $organization->documents()->create($data);
+
+        if ($request->filled('documentable_type')) {
+            $redirectRoute = $validated['documentable_type'] === 'App\Models\Site' ? 'sites.show' : 'assets.show';
+            return redirect()->route($redirectRoute, [$organization->slug, $validated['documentable_id']])->with('success', 'Document uploaded.');
+        }
 
         return redirect()->route('documents.show', [$organization->slug, $document->id])->with('success', 'Document created.');
     }
@@ -42,8 +68,30 @@ class DocumentController extends Controller
     {
         $this->authorize('document.view');
         $currentOrganization = $request->attributes->get('current_organization');
-        $htmlContent = Str::markdown($document->content);
+
+        $htmlContent = $document->is_upload ? null : Str::markdown($document->content ?? '');
+
         return view('documents.show', compact('currentOrganization', 'document', 'htmlContent'));
+    }
+
+    public function download(Request $request, $organization, Document $document)
+    {
+        $this->authorize('document.view');
+        if (!$document->is_upload) {
+            abort(404);
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('public')->download($document->file_path, $document->file_name);
+    }
+
+    public function preview(Request $request, $organization, Document $document)
+    {
+        $this->authorize('document.view');
+        if (!$document->is_upload) {
+            abort(404);
+        }
+
+        return response()->file(storage_path('app/public/' . $document->file_path));
     }
 
     public function edit(Request $request, $organization, Document $document)

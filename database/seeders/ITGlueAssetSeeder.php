@@ -95,7 +95,7 @@ class ITGlueAssetSeeder extends Seeder
                 'Monitoring Enabled (Yes/No)' => 'select:Yes,No',
                 'RMM Agent Installed (Yes/No)' => 'select:Yes,No',
                 'Linked Credentials' => 'text', // Placeholder for relation
-                'Linked Documents' => 'text',   // Placeholder for relation
+                'Linked Documents' => 'text', // Placeholder for relation
                 'Notes' => 'textarea',
             ],
             'Configurations' => [
@@ -116,7 +116,7 @@ class ITGlueAssetSeeder extends Seeder
             // Skipping to avoid confusion with core features unless explicitly requested as *Assets*.
             // User listed them as modules. The Controller handles them. 
             // We only seed "Asset Types" for things that go into the `assets` table.
-            
+
             // ☁️ APPS & SERVICES
             'Active Directory' => [
                 'Domain Name' => 'text',
@@ -409,16 +409,21 @@ class ITGlueAssetSeeder extends Seeder
         foreach ($types as $typeName => $fields) {
             $type = AssetType::firstOrCreate(['name' => $typeName]);
 
+            $customFieldsToInsert = [];
             foreach ($fields as $fieldName => $fieldType) {
-                // We use firstOrCreate but if the field type is different we might want to update it.
-                // For simplicity in this demo, firstOrCreate is fine.
-                AssetCustomField::firstOrCreate([
+                $customFieldsToInsert[] = [
                     'asset_type_id' => $type->id,
                     'name' => $fieldName,
-                ], [
-                    'field_type' => $fieldType
-                ]);
+                    'field_type' => $fieldType,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
+
+            // Bulk insert for this type
+            // Note: Using insertOrIgnore or similar if you want to avoid duplicates if re-run, 
+            // but since InstallController runs migrate:fresh, a plain insert is fine and faster.
+            AssetCustomField::insert($customFieldsToInsert);
         }
     }
 }
