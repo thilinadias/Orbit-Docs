@@ -18,6 +18,15 @@
 
 ## Recent Updates (February 2026)
 
+### Document Management & Metadata Scaling (v1.5 — Feb 25 2026)
+
+Resolved production schema desync and enhanced reliability for metadata-only updates:
+
+- **Formal Schema Migration:** Added a version-controlled migration to resolve the `documentable` and `is_upload` column desync on production environments.
+- **Null-Safe Document Saving:** Fixed a crash (Integrity Constraint Violation) when editing documents with null content (e.g., uploaded files).
+- **Flexible Metadata Edits:** Form validation now allows updating document properties (Tags, Category, Status) without requiring a markdown body.
+- **Cache Synchronization:** Updated the Docker entrypoint to include `bootstrap/cache` in the sync process, preventing stale code issues after deployments.
+
 ### Document Deletion & Enhanced Authorization (v1.4 — Feb 25 2026)
 
 Added secure document management and robust permission resolution:
