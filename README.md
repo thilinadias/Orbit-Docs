@@ -16,6 +16,16 @@
 
 ## Recent Updates (February 2026)
 
+### CI/CD Stabilization & Enhanced Security (v1.3 — Feb 25 2026)
+
+Resolved persistent pipeline failures and enhanced the installation experience:
+
+- **Stable GitHub Actions:** Resolved 25 persistent PHPUnit test failures related to database migration corruption and SQLite driver incompatibilities.
+- **Real-Time Installer Progress:** Added a sleek, Alpine.js-powered progress bar to the web installer with live backend reporting via the `/install/status` endpoint.
+- **Bit-Perfect Migrations:** Implemented Base64-mediated file transfers within Docker containers to prevent silent migration file corruption during orchestration.
+- **Full-Text Search Fix:** Native support for SQLite in tests by conditionally disabling unsupported `fullText` indices while maintaining MySQL production performance.
+- **Expanded User Schema:** Aligned database schema with core features, adding native support for MFA (`google2fa_secret`, `mfa_enabled`) and granular administrative permissions.
+
 ### Installer Reliability Overhaul (v1.2 — Feb 23 2026)
 
 Complete redesign of the installation process to eliminate timeout errors:
@@ -198,8 +208,10 @@ To run the application tests, use the following command:
 php artisan test
 ```
 
-The testing environment is configured to use an in-memory SQLite database (`:memory:`), ensuring fast and isolated tests without requiring a separate MySQL database.
-All migrations are automatically run before each test using the `RefreshDatabase` trait.
+The testing environment is configured to use an in-memory SQLite database (`:memory:`), providing a fast, isolated environment.
+
+- **Deterministic Schema:** All migrations (Core, Standard Laravel, and Sanctum) are manually orchestrated in the base `TestCase.php` to ensure a guaranteed healthy schema for every test.
+- **SQLite Optimization:** Unsupported MySQL features (like `fullText` indices) are automatically bypassed during test runs to ensure perfect driver compatibility.
 
 ## License
 
