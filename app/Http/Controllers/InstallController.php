@@ -12,7 +12,24 @@ class InstallController extends Controller
 {
     public function welcome()
     {
-        return view('install.welcome');
+        $requirements = [
+            'PHP Version >= 8.1.0' => phpversion() >= '8.1.0',
+            'BCMath Extension' => extension_loaded('bcmath'),
+            'Ctype Extension' => extension_loaded('ctype'),
+            'JSON Extension' => extension_loaded('json'),
+            'Mbstring Extension' => extension_loaded('mbstring'),
+            'OpenSSL Extension' => extension_loaded('openssl'),
+            'PDO Extension' => extension_loaded('pdo'),
+            'Tokenizer Extension' => extension_loaded('tokenizer'),
+            'XML Extension' => extension_loaded('xml'),
+            '.env Writable' => is_writable(base_path('.env')),
+            'storage Writable' => is_writable(storage_path()),
+            'bootstrap/cache Writable' => is_writable(base_path('bootstrap/cache')),
+        ];
+
+        $allMet = !in_array(false, $requirements);
+
+        return view('install.welcome', compact('requirements', 'allMet'));
     }
 
     public function requirements()

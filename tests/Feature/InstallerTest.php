@@ -10,7 +10,7 @@ class InstallerTest extends TestCase
     {
         // Mock not running unit tests to test the middleware logic
         $response = $this->get(route('install.welcome'));
-        
+
         $response->assertStatus(200);
     }
 }
