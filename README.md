@@ -11,10 +11,18 @@
 - **Asset Management**: Track servers, workstations, networking gear, and more.
 - **Credential Vault**: Securely store and share passwords with AES-256 encryption.
 - **Documentation**: Write and organize internal wikis using Markdown.
+- **Document Deletion**: Securely remove documentation and files (Admins only).
 - **Activity Logs**: Audit trail for all changes.
 - **Modern UI**: Clean, dark-mode compatible interface built with TailwindCSS and Alpine.js.
 
 ## Recent Updates (February 2026)
+
+### Document Deletion & Enhanced Authorization (v1.4 — Feb 25 2026)
+
+Added secure document management and robust permission resolution:
+
+- **Document Deletion:** Securely remove documentation and associated physical files from storage. Restricted to Super Admins and Organization Admins.
+- **Dynamic Gate Resolution:** Refactored the internal authorization system to use a dynamic `Gate::after` hook. This ensures permissions are correctly resolved in all environments (including tests) and removes the database-dependency during boot.
 
 ### CI/CD Stabilization & Enhanced Security (v1.3 — Feb 25 2026)
 
